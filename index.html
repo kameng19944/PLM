@@ -388,7 +388,7 @@ td .sub2{color:var(--muted);font-size:11.5px}
     </div>
     <nav class="nav" id="nav"></nav>
     <div class="side-foot">
-      <b>源本生物 · 研发中心</b><br>
+      <b>示例健康科技 · 研发中心</b><br>
       v2.4 演示版 · 数据存于本地浏览器
     </div>
   </aside>
@@ -403,7 +403,7 @@ td .sub2{color:var(--muted);font-size:11.5px}
       <div class="today" id="today"></div>
       <div class="me">
         <div class="av">研</div>
-        <div class="nm">张敏<i>研发部 · 产品经理</i></div>
+        <div class="nm">张工<i>研发部 · 产品经理</i></div>
       </div>
     </header>
     <div class="view" id="view"></div>
@@ -420,7 +420,7 @@ const FLOW = ['草稿','影响评估','审批中','已批准','实施中','已�
 
 function seed(){
   return {
-    meta:{ org:'源本生物科技有限公司', dept:'研发中心', updated:'', schema:2 },
+    meta:{ org:'示例健康科技有限公司', dept:'研发中心', updated:'', schema:2 },
     libs:[
       {id:'LIB1',code:'RAW-F',name:'功能性原料库',desc:'十字花科来源活性物、酶制剂等功能性核心原料',color:'#0e8f5f'},
       {id:'LIB2',code:'RAW-V',name:'维生素与矿物质库',desc:'营养强化剂，按 GB 14880 规定使用',color:'#2361c9'},
@@ -429,29 +429,29 @@ function seed(){
       {id:'LIB5',code:'PKG',name:'包装材料库',desc:'瓶、袋、箱等食品接触材料',color:'#0d6d72'}
     ],
     materials:[
-      {id:'M001',libId:'LIB1',code:'RM-1001',name:'西兰花种子提取物（萝卜硫苷 13%）',type:'原料',origin:'十字花科 西兰花 Brassica oleracea var. italica 成熟种子',spec:'萝卜硫苷≥13.0%，水分≤5.0%，重金属≤10ppm',unit:'kg',price:1850,sup:'SUP01',status:'在用',ver:'V2.1',date:'2024-11-08',note:'主力活性原料，宁夏/山东双基地采购',
-        acts:[['萝卜硫苷 Glucoraphanin','≥13.0%','HPLC'],['总硫代葡萄糖苷','≥18.0%','HPLC'],['水分','≤5.0%','GB 5009.3']],
+      {id:'M001',libId:'LIB1',code:'RM-1001',name:'植物提取物 A（活性成分 A 13%）',type:'原料',origin:'植物原料经水提、浓缩、喷雾干燥制得',spec:'活性成分 A≥13.0%，水分≤5.0%，重金属≤10ppm',unit:'kg',price:860,sup:'SUP01',status:'在用',ver:'V2.1',date:'2024-11-08',note:'主力活性原料，西北/华北双基地采购',
+        acts:[['总黄酮（以芦丁计）','≥13.0%','HPLC'],['总多酚','≥18.0%','HPLC'],['水分','≤5.0%','GB 5009.3']],
         nut:{e:1180,p:9.8,f:0.8,c:58.6,s:4.2,fib:14.5,na:145},
-        regs:[['新食品原料','国家卫生计生委 2017 年第 7 号公告（西兰花种子水提物）','普通食品，婴幼儿食品除外','≤600mg/天（以萝卜硫苷计）'],
+        regs:[['新食品原料','国家卫生计生委 2017 年第 7 号公告（植物提取物（示例））','普通食品，婴幼儿食品除外','≤600mg/天（以活性成分 A计）'],
               ['出口','美国 self-GRAS / 欧盟 Novel Food 已授权','膳食补充剂','按目的国法规']],
-        fn:['抗氧化','激活 Nrf2 通路','诱导 II 相解毒酶']},
-      {id:'M002',libId:'LIB1',code:'IM-1101',name:'萝卜硫苷标准化中间体（40%）',type:'中间体',origin:'自制：RM-1001 经大孔树脂纯化、微囊化',spec:'萝卜硫苷 40%±2%，微囊化粉体，D90≤80μm',unit:'kg',price:5994,made:true,sup:'',status:'在用',ver:'V1.3',date:'2024-10-21',note:'自制中间体，单价为折算成本（3kg RM-1001/kg 产品 + 8% 损耗）',
-        acts:[['萝卜硫苷 Glucoraphanin','40.0%±2%','HPLC'],['总硫代葡萄糖苷','≥45.0%','HPLC'],['蛋白质残留','≤1.0%','Kjeldahl']],
+        fn:['抗氧化','清除自由基','减少氧化损伤']},
+      {id:'M002',libId:'LIB1',code:'IM-1101',name:'标准化中间体 A（40%）',type:'中间体',origin:'自制：RM-1001 经大孔树脂纯化、微囊化',spec:'活性成分 A 40%±2%，微囊化粉体，D90≤80μm',unit:'kg',price:2786,made:true,sup:'',status:'在用',ver:'V1.3',date:'2024-10-21',note:'自制中间体，单价为折算成本（3kg RM-1001/kg 产品 + 8% 损耗）',
+        acts:[['总黄酮（以芦丁计）','40.0%±2%','HPLC'],['总多酚','≥45.0%','HPLC'],['蛋白质残留','≤1.0%','Kjeldahl']],
         nut:{e:1250,p:3.2,f:0.3,c:78.4,s:1.1,fib:2.0,na:90},
         regs:[['新食品原料','沿用 2017 年第 7 号公告（纯化工艺需重新评估）','普通食品，婴幼儿食品除外','≤600mg/天']],
         fn:['高浓度活性物','便于低剂量成型']},
-      {id:'M003',libId:'LIB1',code:'RM-1002',name:'萝卜硫素（DL-Sulforaphane 1%）',type:'原料',origin:'酶解转化 + β-环糊精包埋',spec:'萝卜硫素≥1.0%，环糊精包埋率≥85%',unit:'kg',price:9800,sup:'SUP02',status:'试制',ver:'V1.0',date:'2024-11-15',note:'新剂型开发用，成本敏感；国内仅可出口/跨境',
-        acts:[['萝卜硫素 DL-Sulforaphane','≥1.0%','HPLC'],['包埋率','≥85%','UV'],['水分','≤4.0%','GB 5009.3']],
+      {id:'M003',libId:'LIB1',code:'RM-1002',name:'脂溶性活性物 B（1%）',type:'原料',origin:'酶解转化 + β-环糊精包埋',spec:'活性物 B≥1.0%，环糊精包埋率≥85%',unit:'kg',price:4200,sup:'SUP02',status:'试制',ver:'V1.0',date:'2024-11-15',note:'新剂型开发用，成本敏感；国内仅可出口/跨境',
+        acts:[['活性物 B','≥1.0%','HPLC'],['包埋率','≥85%','UV'],['水分','≤4.0%','GB 5009.3']],
         nut:{e:1520,p:0.5,f:0.2,c:88.0,s:0.5,fib:0,na:60},
         regs:[['合规提示','未列入我国新食品原料目录','不得直接用于境内普通食品','需完成安全性评估与申报'],
               ['美国','Self-affirmed GRAS','膳食补充剂','按 cGMP']],
         fn:['直接活性形式','高生物利用度']},
-      {id:'M004',libId:'LIB1',code:'RM-1003',name:'黑芥子酶（Myrosinase 2000U/g）',type:'原料',origin:'十字花科植物（辣根 / 芥菜籽）分离纯化',spec:'酶活≥2000U/g，水分≤6%',unit:'kg',price:4200,sup:'SUP03',status:'在用',ver:'V1.1',date:'2024-08-30',note:'体外转化用，需 2-8℃ 冷链',
-        acts:[['黑芥子酶活','≥2000 U/g','GB/T 20370'],['水分','≤6.0%','GB 5009.3'],['铅','≤0.5mg/kg','GB 5009.12']],
+      {id:'M004',libId:'LIB1',code:'RM-1003',name:'复合酶制剂（2000U/g）',type:'原料',origin:'十字花科植物（辣根 / 芥菜籽）分离纯化',spec:'酶活≥2000U/g，水分≤6%',unit:'kg',price:260,sup:'SUP03',status:'在用',ver:'V1.1',date:'2024-08-30',note:'体外转化用，需 2-8℃ 冷链',
+        acts:[['酶活','≥2000 U/g','GB/T 20370'],['水分','≤6.0%','GB 5009.3'],['铅','≤0.5mg/kg','GB 5009.12']],
         nut:{e:980,p:42.0,f:1.2,c:38.5,s:2.0,fib:6.0,na:210},
         regs:[['食品添加剂','GB 1886.174《食品工业用酶制剂》','食品加工助剂','按生产需要适量使用']],
-        fn:['催化硫苷转化为萝卜硫素']},
-      {id:'M013',libId:'LIB1',code:'RM-1004',name:'西兰花种子（有机，宁夏产）',type:'原料',origin:'宁夏固原有机种植基地',spec:'发芽率≥90%，水分≤9%',unit:'kg',price:62,sup:'SUP06',status:'停用',ver:'V1.0',date:'2024-04-02',note:'供应商资质过期，暂停采购',
+        fn:['催化硫苷转化为活性物 B']},
+      {id:'M013',libId:'LIB1',code:'RM-1004',name:'植物原料（有机，西北产）',type:'原料',origin:'西北有机种植基地',spec:'发芽率≥90%，水分≤9%',unit:'kg',price:18,sup:'SUP06',status:'停用',ver:'V1.0',date:'2024-04-02',note:'供应商资质过期，暂停采购',
         acts:[['发芽率','≥90%','GB/T 3543'],['水分','≤9.0%','GB 5009.3']],
         nut:{e:1420,p:24.0,f:12.0,c:45.0,s:3.5,fib:18.0,na:16},
         regs:[['普通食品原料','有长期食用习惯（十字花科蔬菜种子）','普通食品','无特殊限量']],
@@ -485,7 +485,7 @@ function seed(){
         regs:[['食品添加剂','GB 1886.76 姜黄素（着色剂）','按 GB 2760 着色剂用途','按生产需要适量'],
               ['保健食品','《保健食品原料目录》姜黄','保健食品','按目录用量']],
         fn:['抗炎','抗氧化']},
-      {id:'M019',libId:'LIB3',code:'PH-5002',name:'枸杞提取物（多糖 30%）',type:'原料',origin:'宁夏枸杞 Lycium barbarum 果实水提',spec:'枸杞多糖≥30%，水分≤5%',unit:'kg',price:320,sup:'SUP01',status:'在用',ver:'V1.0',date:'2024-07-22',note:'',
+      {id:'M019',libId:'LIB3',code:'PH-5002',name:'枸杞提取物（多糖 30%）',type:'原料',origin:'枸杞 Lycium barbarum 果实水提',spec:'枸杞多糖≥30%，水分≤5%',unit:'kg',price:320,sup:'SUP01',status:'在用',ver:'V1.0',date:'2024-07-22',note:'',
         acts:[['枸杞多糖','≥30.0%','UV 法'],['水分','≤5.0%','GB 5009.3'],['甜菜碱','≥1.0%','HPLC']],
         nut:{e:1290,p:8.5,f:1.2,c:70.0,s:22.0,fib:6.0,na:180},
         regs:[['药食同源','卫法监发〔2002〕51 号（既是食品又是药品名单）','普通食品','无特殊限量']],
@@ -554,7 +554,7 @@ function seed(){
         fn:['运输包装']}
     ],
     products:[
-      {id:'P001',code:'FG-1001',name:'西兰花种子提取物片（萝卜硫苷 20mg/片）',form:'片剂',spec:'60 片/瓶，0.5g/片',stage:'量产',owner:'张敏',base:'每千片',date:'2024-09-12',
+      {id:'P001',code:'FG-1001',name:'植物提取物 A 片（活性成分 A 20mg/片）',form:'片剂',spec:'60 片/瓶，0.5g/片',stage:'量产',owner:'张工',base:'每千片',date:'2024-09-12',
         bom:[
           {id:'n1',mid:'M002',qty:0.05,unit:'kg',loss:2,children:[{id:'n1a',mid:'M001',qty:3,unit:'kg',loss:8,children:[]}]},
           {id:'n2',mid:'M005',qty:0.38,unit:'kg',loss:3,children:[]},
@@ -564,14 +564,14 @@ function seed(){
           {id:'n6',mid:'M010',qty:17,unit:'个',loss:0,children:[]},
           {id:'n7',mid:'M012',qty:1,unit:'个',loss:0,children:[]}
         ]},
-      {id:'P002',code:'FG-1002',name:'萝卜硫素软胶囊（萝卜硫素 5mg/粒）',form:'胶囊',spec:'60 粒/瓶，0.8g/粒',stage:'中试',owner:'李伟',base:'每千粒',date:'2024-10-30',
+      {id:'P002',code:'FG-1002',name:'活性物 B 软胶囊（活性物 B 5mg/粒）',form:'胶囊',spec:'60 粒/瓶，0.8g/粒',stage:'中试',owner:'李工',base:'每千粒',date:'2024-10-30',
         bom:[
           {id:'n1',mid:'M003',qty:0.65,unit:'kg',loss:3,children:[]},
           {id:'n2',mid:'M004',qty:0.02,unit:'kg',loss:2,children:[]},
           {id:'n3',mid:'M011',qty:17,unit:'个',loss:0,children:[]},
           {id:'n4',mid:'M012',qty:1,unit:'个',loss:0,children:[]}
         ]},
-      {id:'P003',code:'FG-1003',name:'萝卜硫苷固体饮料（条装 3g）',form:'粉剂',spec:'30 条/盒，3g/条',stage:'量产',owner:'王芳',base:'每千条',date:'2024-08-05',
+      {id:'P003',code:'FG-1003',name:'植物提取物 A 固体饮料（条装 3g）',form:'粉剂',spec:'30 条/盒，3g/条',stage:'量产',owner:'王工',base:'每千条',date:'2024-08-05',
         bom:[
           {id:'n1',mid:'M001',qty:1.2,unit:'kg',loss:2,children:[]},
           {id:'n2',mid:'M014',qty:1.6,unit:'kg',loss:2,children:[]},
@@ -579,7 +579,7 @@ function seed(){
           {id:'n4',mid:'M011',qty:1000,unit:'个',loss:1,children:[]},
           {id:'n5',mid:'M012',qty:42,unit:'个',loss:0,children:[]}
         ]},
-      {id:'P004',code:'FG-1004',name:'黑芥子酶活化复合粉',form:'粉剂',spec:'1kg/袋，酶活 1600U/g',stage:'研发',owner:'陈静',base:'每袋',date:'2024-11-18',
+      {id:'P004',code:'FG-1004',name:'酶制剂复合粉',form:'粉剂',spec:'1kg/袋，酶活 1600U/g',stage:'研发',owner:'陈工',base:'每袋',date:'2024-11-18',
         bom:[
           {id:'n1',mid:'M004',qty:0.8,unit:'kg',loss:2,children:[]},
           {id:'n2',mid:'M014',qty:0.2,unit:'kg',loss:2,children:[]},
@@ -587,113 +587,113 @@ function seed(){
         ]}
     ],
     changes:[
-      {id:'C001',code:'ECN-2024-018',title:'萝卜硫苷提取物供应商变更（山东寿光 → 江苏邳州）',type:'供应商变更',pri:'高',status:'审批中',
-        initiator:'李伟',owner:'王芳',created:'2024-11-02',due:'2024-11-22',affected:['M001','P001','P003'],
-        desc:'山东寿光基地 2024 年减产，为保证交付，申请切换至江苏邳州工厂供货。需完成小试比对、稳定性桥接与包材相容性复核。',
-        approvals:[{role:'研发',user:'张敏',state:'已通过',date:'2024-11-05',cmt:'含量与指纹图谱一致'},
-                   {role:'质量',user:'陈静',state:'待审批',date:'',cmt:''},
-                   {role:'生产',user:'赵磊',state:'待审批',date:'',cmt:''},
-                   {role:'法规',user:'周颖',state:'待审批',date:'',cmt:''}],
-        history:[{t:'2024-11-02 09:12',u:'李伟',a:'创建变更申请'},{t:'2024-11-05 14:30',u:'张敏',a:'研发审批通过'},{t:'2024-11-06 10:02',u:'王芳',a:'提交评审'}]},
+      {id:'C001',code:'ECN-2024-018',title:'植物提取物 A 供应商变更（华北 → 华东）',type:'供应商变更',pri:'高',status:'审批中',
+        initiator:'李工',owner:'王工',created:'2024-11-02',due:'2024-11-22',affected:['M001','P001','P003'],
+        desc:'华北基地基地 2024 年减产，为保证交付，申请切换至华东基地工厂供货。需完成小试比对、稳定性桥接与包材相容性复核。',
+        approvals:[{role:'研发',user:'张工',state:'已通过',date:'2024-11-05',cmt:'含量与指纹图谱一致'},
+                   {role:'质量',user:'陈工',state:'待审批',date:'',cmt:''},
+                   {role:'生产',user:'赵工',state:'待审批',date:'',cmt:''},
+                   {role:'法规',user:'周工',state:'待审批',date:'',cmt:''}],
+        history:[{t:'2024-11-02 09:12',u:'李工',a:'创建变更申请'},{t:'2024-11-05 14:30',u:'张工',a:'研发审批通过'},{t:'2024-11-06 10:02',u:'王工',a:'提交评审'}]},
       {id:'C002',code:'ECR-2024-021',title:'片重由 0.5g 调整为 0.4g（降本 8%）',type:'配方变更',pri:'中',status:'影响评估',
-        initiator:'张敏',owner:'张敏',created:'2024-11-11',due:'2024-12-06',affected:['P001'],
+        initiator:'张工',owner:'张工',created:'2024-11-11',due:'2024-12-06',affected:['P001'],
         desc:'通过提高中间体占比、下调填充剂比例，将片重降至 0.4g。需评估硬度、崩解时限与货架期稳定性。',
-        approvals:[{role:'研发',user:'张敏',state:'待审批',date:'',cmt:''},{role:'质量',user:'陈静',state:'待审批',date:'',cmt:''}],
-        history:[{t:'2024-11-11 16:20',u:'张敏',a:'创建变更申请'},{t:'2024-11-12 09:05',u:'张敏',a:'进入影响评估'}]},
+        approvals:[{role:'研发',user:'张工',state:'待审批',date:'',cmt:''},{role:'质量',user:'陈工',state:'待审批',date:'',cmt:''}],
+        history:[{t:'2024-11-11 16:20',u:'张工',a:'创建变更申请'},{t:'2024-11-12 09:05',u:'张工',a:'进入影响评估'}]},
       {id:'C003',code:'ECN-2024-015',title:'60mL HDPE 瓶切换为避光铝塑泡罩',type:'包装变更',pri:'中',status:'实施中',
-        initiator:'王芳',owner:'赵磊',created:'2024-10-08',due:'2024-11-30',affected:['M010','P001'],
+        initiator:'王工',owner:'赵工',created:'2024-10-08',due:'2024-11-30',affected:['M010','P001'],
         desc:'客户反馈瓶装携带不便，切换泡罩包装。涉及包材新开模、装箱规格调整与标签改版。',
-        approvals:[{role:'研发',user:'张敏',state:'已通过',date:'2024-10-10',cmt:''},{role:'质量',user:'陈静',state:'已通过',date:'2024-10-12',cmt:'相容性合格'},
-                   {role:'生产',user:'赵磊',state:'已通过',date:'2024-10-15',cmt:''}],
-        history:[{t:'2024-10-08 11:00',u:'王芳',a:'创建变更申请'},{t:'2024-10-15 17:40',u:'赵磊',a:'审批通过，开始实施'}]},
-      {id:'C004',code:'ECR-2024-009',title:'萝卜硫苷含量指标由 ≥13% 提升至 ≥20%',type:'规格变更',pri:'高',status:'已关闭',
-        initiator:'张敏',owner:'张敏',created:'2024-05-20',due:'2024-08-30',affected:['M001','M002','P003'],
+        approvals:[{role:'研发',user:'张工',state:'已通过',date:'2024-10-10',cmt:''},{role:'质量',user:'陈工',state:'已通过',date:'2024-10-12',cmt:'相容性合格'},
+                   {role:'生产',user:'赵工',state:'已通过',date:'2024-10-15',cmt:''}],
+        history:[{t:'2024-10-08 11:00',u:'王工',a:'创建变更申请'},{t:'2024-10-15 17:40',u:'赵工',a:'审批通过，开始实施'}]},
+      {id:'C004',code:'ECR-2024-009',title:'活性成分 A 含量指标由 ≥13% 提升至 ≥20%',type:'规格变更',pri:'高',status:'已关闭',
+        initiator:'张工',owner:'张工',created:'2024-05-20',due:'2024-08-30',affected:['M001','M002','P003'],
         desc:'对标竞品规格，提升提取物含量标准。已完成工艺放大与客户通知。',
-        approvals:[{role:'研发',user:'张敏',state:'已通过',date:'2024-06-01',cmt:''},{role:'质量',user:'陈静',state:'已通过',date:'2024-06-05',cmt:''},
-                   {role:'法规',user:'周颖',state:'已通过',date:'2024-06-09',cmt:'标签已同步更新'}],
-        history:[{t:'2024-05-20 10:00',u:'张敏',a:'创建变更申请'},{t:'2024-08-28 15:00',u:'张敏',a:'验证完成，关闭变更'}]},
-      {id:'C005',code:'ECR-2024-024',title:'新增黑芥子酶供应商（双源保障）',type:'供应商变更',pri:'低',status:'草稿',
-        initiator:'陈静',owner:'陈静',created:'2024-11-19',due:'2024-12-20',affected:['M004','P002','P004'],
+        approvals:[{role:'研发',user:'张工',state:'已通过',date:'2024-06-01',cmt:''},{role:'质量',user:'陈工',state:'已通过',date:'2024-06-05',cmt:''},
+                   {role:'法规',user:'周工',state:'已通过',date:'2024-06-09',cmt:'标签已同步更新'}],
+        history:[{t:'2024-05-20 10:00',u:'张工',a:'创建变更申请'},{t:'2024-08-28 15:00',u:'张工',a:'验证完成，关闭变更'}]},
+      {id:'C005',code:'ECR-2024-024',title:'新增酶制剂供应商（双源保障）',type:'供应商变更',pri:'低',status:'草稿',
+        initiator:'陈工',owner:'陈工',created:'2024-11-19',due:'2024-12-20',affected:['M004','P002','P004'],
         desc:'现独家供应存在断供风险，拟引入第二供应商，需完成资质审核与三批小样验证。',
-        approvals:[],history:[{t:'2024-11-19 09:40',u:'陈静',a:'创建变更申请（草稿）'}]},
+        approvals:[],history:[{t:'2024-11-19 09:40',u:'陈工',a:'创建变更申请（草稿）'}]},
       {id:'C006',code:'ECN-2024-011',title:'提取工艺由水提改为酶辅助水提',type:'工艺变更',pri:'高',status:'已批准',
-        initiator:'李伟',owner:'李伟',created:'2024-07-02',due:'2024-11-15',affected:['M002','P001','P003'],
-        desc:'引入纤维素酶辅助提取，萝卜硫苷收率提升约 12%，需重新验证杂质谱与溶剂残留。',
-        approvals:[{role:'研发',user:'张敏',state:'已通过',date:'2024-07-15',cmt:''},{role:'质量',user:'陈静',state:'已通过',date:'2024-07-20',cmt:''},
-                   {role:'生产',user:'赵磊',state:'已通过',date:'2024-07-25',cmt:'设备可兼容'}],
-        history:[{t:'2024-07-02 14:10',u:'李伟',a:'创建变更申请'},{t:'2024-07-25 16:22',u:'张敏',a:'变更批准，待排产实施'}]}
+        initiator:'李工',owner:'李工',created:'2024-07-02',due:'2024-11-15',affected:['M002','P001','P003'],
+        desc:'引入纤维素酶辅助提取，活性成分 A收率提升约 12%，需重新验证杂质谱与溶剂残留。',
+        approvals:[{role:'研发',user:'张工',state:'已通过',date:'2024-07-15',cmt:''},{role:'质量',user:'陈工',state:'已通过',date:'2024-07-20',cmt:''},
+                   {role:'生产',user:'赵工',state:'已通过',date:'2024-07-25',cmt:'设备可兼容'}],
+        history:[{t:'2024-07-02 14:10',u:'李工',a:'创建变更申请'},{t:'2024-07-25 16:22',u:'张工',a:'变更批准，待排产实施'}]}
     ],
     docs:[
-      {id:'D001',code:'SOP-MFG-012',title:'提取车间工艺操作规程（酶辅助水提）',type:'SOP',ver:'V3.2',status:'生效',link:'M002',owner:'赵磊',date:'2024-09-12',expire:'2026-09-11'},
-      {id:'D002',code:'SPEC-RM-1001',title:'西兰花种子提取物采购规格书',type:'规格书',ver:'V2.1',status:'生效',link:'M001',owner:'张敏',date:'2024-11-08',expire:'2025-11-07'},
-      {id:'D003',code:'COA-2024-1187',title:'RM-1001 批次检验报告（B2409-1187）',type:'COA',ver:'-',status:'生效',link:'M001',owner:'陈静',date:'2024-11-05',expire:'2025-11-04'},
-      {id:'D004',code:'REG-NFI-2024',title:'西兰花种子提取物新食品原料申报材料',type:'法规文件',ver:'V1.4',status:'审核中',link:'M001',owner:'周颖',date:'2024-10-28',expire:'2025-10-27'},
-      {id:'D005',code:'RPT-STA-031',title:'FG-1001 加速稳定性试验报告（6 个月）',type:'研究报告',ver:'V1.0',status:'生效',link:'P001',owner:'陈静',date:'2024-08-16',expire:'2025-02-02'},
-      {id:'D006',code:'SOP-QA-008',title:'供应商现场审计管理规程',type:'SOP',ver:'V2.0',status:'生效',link:'',owner:'陈静',date:'2024-04-10',expire:'2025-01-15'},
-      {id:'D007',code:'LBL-FG-1001',title:'FG-1001 标签稿件（含功能声称）',type:'标签稿件',ver:'V3.0',status:'草稿',link:'P001',owner:'王芳',date:'2024-11-16',expire:''},
-      {id:'D008',code:'COA-2023-0912',title:'RM-1001 批次检验报告（B2308-0912）',type:'COA',ver:'-',status:'已作废',link:'M001',owner:'陈静',date:'2023-08-20',expire:'2024-08-19'}
+      {id:'D001',code:'SOP-MFG-012',title:'提取车间工艺操作规程（酶辅助水提）',type:'SOP',ver:'V3.2',status:'生效',link:'M002',owner:'赵工',date:'2024-09-12',expire:'2026-09-11'},
+      {id:'D002',code:'SPEC-RM-1001',title:'植物提取物 A 采购规格书',type:'规格书',ver:'V2.1',status:'生效',link:'M001',owner:'张工',date:'2024-11-08',expire:'2025-11-07'},
+      {id:'D003',code:'COA-2024-1187',title:'RM-1001 批次检验报告（B2409-1187）',type:'COA',ver:'-',status:'生效',link:'M001',owner:'陈工',date:'2024-11-05',expire:'2025-11-04'},
+      {id:'D004',code:'REG-NFI-2024',title:'植物提取物 A 新食品原料申报材料',type:'法规文件',ver:'V1.4',status:'审核中',link:'M001',owner:'周工',date:'2024-10-28',expire:'2025-10-27'},
+      {id:'D005',code:'RPT-STA-031',title:'FG-1001 加速稳定性试验报告（6 个月）',type:'研究报告',ver:'V1.0',status:'生效',link:'P001',owner:'陈工',date:'2024-08-16',expire:'2025-02-02'},
+      {id:'D006',code:'SOP-QA-008',title:'供应商现场审计管理规程',type:'SOP',ver:'V2.0',status:'生效',link:'',owner:'陈工',date:'2024-04-10',expire:'2025-01-15'},
+      {id:'D007',code:'LBL-FG-1001',title:'FG-1001 标签稿件（含功能声称）',type:'标签稿件',ver:'V3.0',status:'草稿',link:'P001',owner:'王工',date:'2024-11-16',expire:''},
+      {id:'D008',code:'COA-2023-0912',title:'RM-1001 批次检验报告（B2308-0912）',type:'COA',ver:'-',status:'已作废',link:'M001',owner:'陈工',date:'2023-08-20',expire:'2024-08-19'}
     ],
     projects:[
-      {id:'J001',code:'PRJ-2024-03',name:'萝卜硫素微囊化中试放大',stage:'中试',prog:68,owner:'李伟',start:'2024-06-01',end:'2024-12-31',
-       desc:'以 β-环糊精包埋提升萝卜硫素稳定性，目标包埋率≥85%，中试批量 50kg。',ms:['包埋工艺确定','中试三批验证','稳定性 3 月数据','转量产评审']},
-      {id:'J002',code:'PRJ-2024-06',name:'高含量萝卜硫苷（≥40%）工艺开发',stage:'小试',prog:45,owner:'张敏',start:'2024-08-15',end:'2025-03-31',
-       desc:'通过大孔树脂纯化将萝卜硫苷含量提升至 40% 以上，收率不低于 65%。',ms:['树脂选型','纯化参数优化','小试三批','成本测算']},
-      {id:'J003',code:'PRJ-2025-01',name:'西兰花种子提取物新食品原料申报',stage:'注册申报',prog:30,owner:'周颖',start:'2024-09-01',end:'2025-09-30',
+      {id:'J001',code:'PRJ-2024-03',name:'活性物 B 微囊化中试放大',stage:'中试',prog:68,owner:'李工',start:'2024-06-01',end:'2024-12-31',
+       desc:'以 β-环糊精包埋提升活性物 B稳定性，目标包埋率≥85%，中试批量 50kg。',ms:['包埋工艺确定','中试三批验证','稳定性 3 月数据','转量产评审']},
+      {id:'J002',code:'PRJ-2024-06',name:'高含量植物提取物（≥40%）工艺开发',stage:'小试',prog:45,owner:'张工',start:'2024-08-15',end:'2025-03-31',
+       desc:'通过大孔树脂纯化将活性成分 A含量提升至 40% 以上，收率不低于 65%。',ms:['树脂选型','纯化参数优化','小试三批','成本测算']},
+      {id:'J003',code:'PRJ-2025-01',name:'植物提取物 A 新食品原料申报',stage:'注册申报',prog:30,owner:'周工',start:'2024-09-01',end:'2025-09-30',
        desc:'完成安全性评估、工艺必要性与标签合规材料，提交国家卫健委受理。',ms:['材料起草','安全性评估','专家论证','正式受理']},
-      {id:'J004',code:'PRJ-2024-09',name:'缓释片配方开发（12 小时释放）',stage:'概念',prog:15,owner:'陈静',start:'2024-11-01',end:'2025-06-30',
+      {id:'J004',code:'PRJ-2024-09',name:'缓释片配方开发（12 小时释放）',stage:'概念',prog:15,owner:'陈工',start:'2024-11-01',end:'2025-06-30',
        desc:'骨架型缓释体系，目标 2h 释放 30%、12h 释放 ≥90%。',ms:['骨架材料筛选','释放曲线方法学','处方确定']},
-      {id:'J005',code:'PRJ-2023-11',name:'固体饮料产线放大与量产导入',stage:'量产导入',prog:92,owner:'王芳',start:'2023-11-20',end:'2024-11-30',
+      {id:'J005',code:'PRJ-2023-11',name:'固体饮料产线放大与量产导入',stage:'量产导入',prog:92,owner:'王工',start:'2023-11-20',end:'2024-11-30',
        desc:'条装线产能由 5 万条/日提升至 12 万条/日，完成 OQ/PQ 验证。',ms:['设备安装','OQ 验证','PQ 三批','量产移交']}
     ],
     suppliers:[
-      {id:'SUP01',code:'SUP-001',name:'山东寿光绿源生物科技有限公司',region:'山东·潍坊',cat:'原料',certs:['SC 生产许可','ISO 22000','HALAL','有机认证'],status:'合格',since:'2019-03',contact:'刘经理 138****6621'},
-      {id:'SUP02',code:'SUP-002',name:'江苏邳州植提生物工程有限公司',region:'江苏·邳州',cat:'原料 / 中间体',certs:['SC 生产许可','ISO 9001','KOSHER'],status:'合格',since:'2022-07',contact:'孙经理 139****3018'},
-      {id:'SUP03',code:'SUP-003',name:'陕西森弗天然制品有限公司',region:'陕西·西安',cat:'酶制剂',certs:['SC 生产许可','FSSC 22000'],status:'考察中',since:'2024-10',contact:'马经理 137****7742'},
-      {id:'SUP04',code:'SUP-004',name:'安徽山河药用辅料股份有限公司',region:'安徽·淮南',cat:'辅料',certs:['CDE 登记 A','ISO 9001','EXCiPACT'],status:'合格',since:'2018-05',contact:'吴经理 135****2209'},
-      {id:'SUP05',code:'SUP-005',name:'浙江天成医药包装有限公司',region:'浙江·台州',cat:'包材',certs:['药包材注册证','ISO 15378'],status:'合格',since:'2020-09',contact:'郑经理 136****5563'},
-      {id:'SUP06',code:'SUP-006',name:'宁夏固原有机农业种植合作社',region:'宁夏·固原',cat:'农产品',certs:['有机认证'],status:'暂停',since:'2021-04',contact:'杨社长 133****8890'}
+      {id:'SUP01',code:'SUP-001',name:'供应商 A（植物原料，示例）',region:'华东地区',cat:'原料',certs:['SC 生产许可','ISO 22000','HALAL','有机认证'],status:'合格',since:'2019-03',contact:'联系人 138****0000'},
+      {id:'SUP02',code:'SUP-002',name:'供应商 B（提取物，示例）',region:'华东地区',cat:'原料 / 中间体',certs:['SC 生产许可','ISO 9001','KOSHER'],status:'合格',since:'2022-07',contact:'联系人 139****0000'},
+      {id:'SUP03',code:'SUP-003',name:'供应商 C（酶制剂，示例）',region:'西北地区',cat:'酶制剂',certs:['SC 生产许可','FSSC 22000'],status:'考察中',since:'2024-10',contact:'联系人 137****0000'},
+      {id:'SUP04',code:'SUP-004',name:'供应商 D（辅料，示例）',region:'华中地区',cat:'辅料',certs:['CDE 登记 A','ISO 9001','EXCiPACT'],status:'合格',since:'2018-05',contact:'联系人 135****0000'},
+      {id:'SUP05',code:'SUP-005',name:'供应商 E（包材，示例）',region:'华东地区',cat:'包材',certs:['药包材注册证','ISO 15378'],status:'合格',since:'2020-09',contact:'联系人 136****0000'},
+      {id:'SUP06',code:'SUP-006',name:'供应商 F（有机种植基地，示例）',region:'西北地区',cat:'农产品',certs:['有机认证'],status:'暂停',since:'2021-04',contact:'联系人 133****0000'}
     ],
     formulas:[
-      {id:'F001',code:'FRM-1001',name:'萝卜硫苷片芯配方（0.5g/片）',ver:'V2.0',status:'已存档',batch:100,yieldRate:96,
-       servings:200000,servingUnit:'片',product:'P001',owner:'张敏',date:'2024-11-10',
+      {id:'F001',code:'FRM-1001',name:'植物提取物 A 片芯配方（0.5g/片）',ver:'V2.0',status:'已存档',batch:100,yieldRate:96,
+       servings:200000,servingUnit:'片',product:'P001',owner:'张工',date:'2024-11-10',
        note:'100kg 片芯批量，对应 20 万片；中间体由 RM-1001 自制成，单价按折算成本计。',
        items:[{ing:'M002',qty:12.5,loss:2},{ing:'M005',qty:62,loss:3},{ing:'M008',qty:3.2,loss:5},
               {ing:'M006',qty:1.0,loss:1},{ing:'M007',qty:0.8,loss:1},{ing:'M009',qty:1.5,loss:1}],
-       archives:[{ver:'V1.0',date:'2024-06-18',user:'张敏',cost:94448.24,unit:983.84,per:0.4722,
-         items:[{ing:'M002',qty:15,loss:2,price:5994},{ing:'M005',qty:60,loss:3,price:38},{ing:'M008',qty:3.2,loss:5,price:96},
+       archives:[{ver:'V1.0',date:'2024-06-18',user:'张工',cost:45365.84,unit:472.56,per:0.2268,
+         items:[{ing:'M002',qty:15,loss:2,price:2786},{ing:'M005',qty:60,loss:3,price:38},{ing:'M008',qty:3.2,loss:5,price:96},
                 {ing:'M006',qty:1.0,loss:1,price:46},{ing:'M007',qty:0.8,loss:1,price:28}]}]},
-      {id:'F002',code:'FRM-1002',name:'萝卜硫素软胶囊内容物配方',ver:'V1.1',status:'草稿',batch:50,yieldRate:98,
-       servings:62500,servingUnit:'粒',product:'P002',owner:'李伟',date:'2024-11-16',
+      {id:'F002',code:'FRM-1002',name:'活性物 B 软胶囊内容物配方',ver:'V1.1',status:'草稿',batch:50,yieldRate:98,
+       servings:62500,servingUnit:'粒',product:'P002',owner:'李工',date:'2024-11-16',
        note:'内容物 0.8g/粒，环糊精包埋体系，需评估高温压丸稳定性。',
        items:[{ing:'M003',qty:32,loss:3},{ing:'M004',qty:1.0,loss:2},{ing:'M014',qty:15,loss:2},{ing:'M009',qty:0.5,loss:1}],
        archives:[]},
-      {id:'F003',code:'FRM-1003',name:'萝卜硫苷固体饮料配方（3g/条）',ver:'V3.0',status:'已存档',batch:200,yieldRate:99,
-       servings:66000,servingUnit:'条',product:'P003',owner:'王芳',date:'2024-11-18',
+      {id:'F003',code:'FRM-1003',name:'植物提取物 A 固体饮料配方（3g/条）',ver:'V3.0',status:'已存档',batch:200,yieldRate:99,
+       servings:66000,servingUnit:'条',product:'P003',owner:'王工',date:'2024-11-18',
        note:'200kg 粉体批量，对应 6.6 万条；甜味体系已由蔗糖改为三氯蔗糖。',
        items:[{ing:'M001',qty:78,loss:2},{ing:'M014',qty:100,loss:2},{ing:'M009',qty:3,loss:1},
               {ing:'M021',qty:0.6,loss:0},{ing:'M022',qty:1.5,loss:0}],
-       archives:[{ver:'V2.0',date:'2024-05-10',user:'王芳',cost:152225.65,unit:768.82,per:2.3064,
-         items:[{ing:'M001',qty:80,loss:2,price:1850},{ing:'M014',qty:100,loss:2,price:9.5},
+       archives:[{ver:'V2.0',date:'2024-05-10',user:'王工',cost:71441.65,unit:360.82,per:1.0824,
+         items:[{ing:'M001',qty:80,loss:2,price:860},{ing:'M014',qty:100,loss:2,price:9.5},
                 {ing:'M009',qty:3,loss:1,price:55},{ing:'M021',qty:0.5,loss:0,price:260}]}]},
       {id:'F004',code:'FRM-2001',name:'复合维生素矿物质粉（出口，4g/份）',ver:'V1.0',status:'草稿',batch:20,yieldRate:98,
-       servings:5000,servingUnit:'份',product:'',owner:'陈静',date:'2024-11-19',
+       servings:5000,servingUnit:'份',product:'',owner:'陈工',date:'2024-11-19',
        note:'出口配方，含甘氨酸镁（境内未列入 GB 14880 镁来源，仅限出口）。',
        items:[{ing:'M009',qty:5,loss:1},{ing:'M015',qty:0.02,loss:0},{ing:'M016',qty:0.35,loss:1},
               {ing:'M017',qty:6,loss:1},{ing:'M014',qty:8,loss:2}],
        archives:[]},
       {id:'F005',code:'FRM-1004',name:'姜黄素复合片配方（0.5g/片）',ver:'V1.0',status:'草稿',batch:80,yieldRate:96,
-       servings:160000,servingUnit:'片',product:'',owner:'张敏',date:'2024-11-20',
+       servings:160000,servingUnit:'片',product:'',owner:'张工',date:'2024-11-20',
        note:'概念验证配方，姜黄素占比 15%，待做溶出与稳定性。',
        items:[{ing:'M018',qty:12,loss:2},{ing:'M005',qty:55,loss:3},{ing:'M008',qty:2.4,loss:5},
               {ing:'M006',qty:0.8,loss:1},{ing:'M007',qty:0.6,loss:1},{ing:'M009',qty:1.2,loss:1}],
        archives:[]}
     ],
     log:[
-      {t:'2024-11-19 09:40',u:'陈静',a:'创建变更申请 ECR-2024-024',k:'change'},
-      {t:'2024-11-18 15:12',u:'陈静',a:'新建产品 FG-1004 黑芥子酶活化复合粉',k:'product'},
-      {t:'2024-11-16 10:05',u:'王芳',a:'上传标签稿件 LBL-FG-1001 V3.0',k:'doc'},
-      {t:'2024-11-15 14:22',u:'李伟',a:'新增物料 RM-1002 萝卜硫素（试制）',k:'material'},
-      {t:'2024-11-12 09:05',u:'张敏',a:'ECR-2024-021 进入影响评估',k:'change'}
+      {t:'2024-11-19 09:40',u:'陈工',a:'创建变更申请 ECR-2024-024',k:'change'},
+      {t:'2024-11-18 15:12',u:'陈工',a:'新建产品 FG-1004 酶制剂复合粉',k:'product'},
+      {t:'2024-11-16 10:05',u:'王工',a:'上传标签稿件 LBL-FG-1001 V3.0',k:'doc'},
+      {t:'2024-11-15 14:22',u:'李工',a:'新增物料 RM-1002 活性物 B（试制）',k:'material'},
+      {t:'2024-11-12 09:05',u:'张工',a:'ECR-2024-021 进入影响评估',k:'change'}
     ]
   };
 }
@@ -731,7 +731,7 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;'
 function mat(id){ return DB.materials.find(m=>m.id===id) || null; }
 function matName(id){ const m=mat(id); return m? m.name : '（物料已删除）'; }
 function supName(id){ const s=DB.suppliers.find(x=>x.id===id); return s? s.name : '—'; }
-function addLog(a,k){ DB.log.unshift({t:nowStr(),u:'张敏',a:a,k:k||'other'}); DB.log = DB.log.slice(0,40); }
+function addLog(a,k){ DB.log.unshift({t:nowStr(),u:'张工',a:a,k:k||'other'}); DB.log = DB.log.slice(0,40); }
 
 /* ================= 成本计算 ================= */
 function unitCost(n){
@@ -1442,18 +1442,18 @@ function matForm(m){
   return '<div class="fgrid">'
     + fld('物料编码','code',m.code,{req:true,ph:'如 RM-1001'})
     + fld('物料类型','type',m.type||'原料',{req:true,type:'select',options:['原料','中间体','辅料','包材']})
-    + fld('物料名称','name',m.name,{req:true,full:true,ph:'如 西兰花种子提取物（萝卜硫苷 13%）'})
+    + fld('物料名称','name',m.name,{req:true,full:true,ph:'如 植物提取物 A（活性成分 A 13%）'})
     + fld('所属原辅料库','libId',m.libId||'LIB1',{req:true,type:'select',options:(DB.libs||[]).map(l=>({v:l.id,t:l.name}))})
-    + fld('基原 / 来源','origin',m.origin,{full:true,ph:'如 十字花科 西兰花 成熟种子'})
-    + fld('规格 / 质量指标','spec',m.spec,{full:true,ph:'如 萝卜硫苷≥13.0%，水分≤5.0%'})
+    + fld('基原 / 来源','origin',m.origin,{full:true,ph:'如 十字花科 十字花科蔬菜 成熟种子'})
+    + fld('规格 / 质量指标','spec',m.spec,{full:true,ph:'如 活性成分 A≥13.0%，水分≤5.0%'})
     + fld('计量单位','unit',m.unit||'kg',{req:true})
     + fld('单价（元 / 单位）','price',m.price,{type:'number',step:'0.01',min:0,ph:'自制中间体填折算成本'})
     + fld('主供应商','sup',m.sup||'',{type:'select',options:[{v:'',t:'（无 / 自制）'}].concat(DB.suppliers.map(s=>({v:s.id,t:s.name})))})
     + fld('状态','status',m.status||'在用',{type:'select',options:['在用','试制','停用']})
     + fld('版本','ver',m.ver||'V1.0')
     + fld('更新日期','date',m.date||todayStr(),{type:'date'})
-    + fld('功效成分指标（每行：名称 | 含量 | 方法）','acts',actsTxt,{type:'textarea',full:true,ph:'萝卜硫苷 Glucoraphanin | ≥13.0% | HPLC'})
-    + fld('功效标签（逗号分隔）','fn',(m.fn||[]).join('，'),{full:true,ph:'抗氧化，激活 Nrf2 通路'})
+    + fld('功效成分指标（每行：名称 | 含量 | 方法）','acts',actsTxt,{type:'textarea',full:true,ph:'总黄酮（以芦丁计） | ≥13.0% | HPLC'})
+    + fld('功效标签（逗号分隔）','fn',(m.fn||[]).join('，'),{full:true,ph:'抗氧化，清除自由基'})
     + '<div class="fld full"><label>营养成分表（每 100g）</label>'
     +   '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">'
     +   nk.map(k=>'<input name="n_'+k[0]+'" type="number" step="0.01" min="0" value="'+(n[k[0]]==null?'':n[k[0]])+'" placeholder="'+k[1]+'" style="height:32px;border:1px solid var(--line);border-radius:7px;padding:0 9px;font-size:12.5px;font-family:inherit;outline:none">').join('')
@@ -1653,10 +1653,10 @@ function impPreview(){
 function impTemplate(){
   const H = ['编码','名称','所属库','类型','规格','单位','单价','主供应商','状态','版本','更新日期','功效成分','营养成分','法规依据','备注'];
   const rows = [H,
-    ['RM-2001','西兰花种子提取物（萝卜硫苷 20%）','功能性原料库','原料','萝卜硫苷≥20.0%，水分≤5.0%','kg','2600','宁夏固原有机农业种植合作社','试制','V1.0','2026-01-15',
-      '萝卜硫苷|≥20.0%|HPLC；萝卜硫素|≤0.8%|HPLC',
+    ['RM-2001','植物提取物 A（活性成分 A 20%）','功能性原料库','原料','活性成分 A≥20.0%，水分≤5.0%','kg','2600','供应商 F（有机种植基地，示例）','试制','V1.0','2026-01-15',
+      '活性成分 A|≥20.0%|HPLC；活性物 B|≤0.8%|HPLC',
       '能量=1480;蛋白质=28.5;脂肪=3.2;碳水化合物=42;糖=6.5;膳食纤维=12;钠=210',
-      '新食品原料|2017年第7号公告|≤600mg/天（以萝卜硫苷计）；普通食品原料|GB 2763|—|—',
+      '新食品原料|2017年第7号公告|≤600mg/天（以活性成分 A计）；普通食品原料|GB 2763|—|—',
       '示例行，可直接删除'],
     ['EX-2007','抗性糊精（水溶性膳食纤维）','食品添加剂与辅料库','辅料','膳食纤维≥85%，食品级','kg','24','','在用','V1.0','2026-01-10',
       '膳食纤维|≥85%|AOAC 2001.03','能量=850;碳水化合物=90;膳食纤维=85','食品添加剂|GB 28050|按生产需要适量使用|—',''],
@@ -1728,7 +1728,7 @@ function prodForm(p){
     + fld('产品名称','name',p.name,{req:true,full:true})
     + fld('规格','spec',p.spec,{full:true,ph:'如 60 片/瓶，0.5g/片'})
     + fld('阶段','stage',p.stage||'研发',{type:'select',options:['研发','中试','量产','停用']})
-    + fld('负责人','owner',p.owner||'张敏')
+    + fld('负责人','owner',p.owner||'张工')
     + fld('BOM 基准','base',p.base||'每千片',{full:true,ph:'如 每千片 / 每千粒 / 每袋'})
     + '</div>';
 }
@@ -1742,9 +1742,9 @@ function changeForm(c){
     + fld('变更标题','title',c.title,{req:true,full:true,ph:'一句话说明改什么、为什么改'})
     + fld('变更说明','desc',c.desc,{type:'textarea',full:true,ph:'背景、原因、影响范围与验证要求'})
     + fld('优先级','pri',c.pri||'中',{type:'select',options:['高','中','低']})
-    + fld('负责人','owner',c.owner||'张敏')
+    + fld('负责人','owner',c.owner||'张工')
     + fld('目标完成日期','due',c.due||todayStr(),{type:'date'})
-    + fld('发起人','initiator',c.initiator||'张敏')
+    + fld('发起人','initiator',c.initiator||'张工')
     + '</div>';
 }
 
@@ -1780,10 +1780,10 @@ function dispatchAct(e){
   if(act==='imp-demo'){
     const ta = document.getElementById('impText'); if(!ta) return;
     ta.value = '编码,名称,所属库,类型,规格,单位,单价,主供应商,状态,版本,更新日期,功效成分,营养成分,法规依据,备注\n'
-      + 'RM-3001,西兰花种子提取物（萝卜硫苷 25%）,功能性原料库,原料,萝卜硫苷≥25.0%，水分≤5.0%,kg,2980,宁夏固原有机农业种植合作社,试制,V1.0,2026-11-18,'
-      + '萝卜硫苷|≥25.0%|HPLC；萝卜硫素|≤1.0%|HPLC,能量=1520;蛋白质=30.2;脂肪=3.5;碳水化合物=40.5;糖=5.8;膳食纤维=14;钠=195,'
-      + '新食品原料|2017年第7号公告|≤600mg/天（以萝卜硫苷计）,高含量规格试制\n'
-      + 'EX-2101,低聚果糖（95% 粉剂）,食品添加剂与辅料库,辅料,低聚果糖≥95%，食品级,kg,32,山东福田药业,在用,V1.0,2026-11-18,'
+      + 'RM-3001,植物提取物 A（活性成分 A 25%）,功能性原料库,原料,活性成分 A≥25.0%，水分≤5.0%,kg,2980,供应商 F（有机种植基地，示例）,试制,V1.0,2026-11-18,'
+      + '活性成分 A|≥25.0%|HPLC；活性物 B|≤1.0%|HPLC,能量=1520;蛋白质=30.2;脂肪=3.5;碳水化合物=40.5;糖=5.8;膳食纤维=14;钠=195,'
+      + '新食品原料|2017年第7号公告|≤600mg/天（以活性成分 A计）,高含量规格试制\n'
+      + 'EX-2101,低聚果糖（95% 粉剂）,食品添加剂与辅料库,辅料,低聚果糖≥95%，食品级,kg,32,供应商 D（辅料，示例）,在用,V1.0,2026-11-18,'
       + '低聚果糖|≥95%|HPLC,,普通食品原料|GB 28050|按生产需要适量使用|,益生元\n'
       + 'PK-3101,铝箔袋 5kg（食品级）,包装材料库,包材,PET/AL/PE，25kg 装,个,1.8,,在用,V1.0,2026-11-18,,,,';
     impPreview(); toast('已填入 3 行示例，可直接体验');
@@ -1816,7 +1816,7 @@ function dispatchAct(e){
   /* --- 配方 --- */
   if(act==='new-formula'){
     const f = {id:uid('F'),code:'FRM-'+String((DB.formulas||[]).length+1).padStart(4,'0'),name:'',ver:'V1.0',status:'草稿',
-      batch:100,yieldRate:98,servings:0,servingUnit:'片',product:'',owner:'张敏',date:todayStr(),note:'',items:[],archives:[]};
+      batch:100,yieldRate:98,servings:0,servingUnit:'片',product:'',owner:'张工',date:todayStr(),note:'',items:[],archives:[]};
     openModal({title:'新建配方', body:'<div class="fgrid">'
       + fld('配方编号','code',f.code,{req:true})
       + fld('配方名称','name','',{req:true})
@@ -1824,7 +1824,7 @@ function dispatchAct(e){
       + fld('成品率（%）','yieldRate','98',{type:'number',step:'0.1',min:1})
       + fld('产出份数','servings','0',{type:'number',step:'1',min:0})
       + fld('份数单位','servingUnit','片',{type:'select',options:['片','粒','条','份','瓶','袋']})
-      + fld('负责人','owner','张敏')
+      + fld('负责人','owner','张工')
       + fld('关联产品编码','product','',{ph:'可选，如 FG-1001'})
       + '</div>', okText:'创建并编辑', onOk:d=>{
         Object.assign(f,{code:d.code,name:d.name,batch:parseFloat(d.batch)||0,yieldRate:parseFloat(d.yieldRate)||100,
@@ -1845,7 +1845,7 @@ function dispatchAct(e){
   if(act==='mat-to-formula'){
     const m = mat(id);
     const f = {id:uid('F'),code:'FRM-'+String((DB.formulas||[]).length+1).padStart(4,'0'),name:'新建配方（'+m.name.slice(0,12)+'）',
-      ver:'V0.1',status:'草稿',batch:100,yieldRate:98,servings:0,servingUnit:'片',product:'',owner:'张敏',
+      ver:'V0.1',status:'草稿',batch:100,yieldRate:98,servings:0,servingUnit:'片',product:'',owner:'张工',
       date:todayStr(),note:'由原辅料档案创建',items:[{ing:m.id,qty:1,loss:0}],archives:[]};
     DB.formulas.unshift(f); save(); ui.formulaId=f.id; ui.editing=null; go('formulas'); toast('已创建配方草稿');
     return;
@@ -1877,7 +1877,7 @@ function dispatchAct(e){
     const total = formulaCost(e), out = formulaOut(e);
     const ver = prompt('请输入本次存档版本号：', nextVer(e.ver));
     if(!ver) return;
-    const snap = {ver:ver, date:todayStr(), user:'张敏', cost:total, unit: total/(out||1),
+    const snap = {ver:ver, date:todayStr(), user:'张工', cost:total, unit: total/(out||1),
       per: e.servings? total/e.servings : 0,
       items: e.items.map(i=>({ing:i.ing,qty:+i.qty,loss:+i.loss||0,price:ingPrice(i.ing)}))};
     const archiveHistory = (f.archives||[]).slice();
@@ -2026,19 +2026,19 @@ function dispatchAct(e){
   }
   if(act==='chg-next'){
     const c = DB.changes.find(x=>x.id===id);
-    if(c.status==='草稿'){ c.status='影响评估'; c.history.push({t:nowStr(),u:'张敏',a:'提交影响评估'}); }
+    if(c.status==='草稿'){ c.status='影响评估'; c.history.push({t:nowStr(),u:'张工',a:'提交影响评估'}); }
     else if(c.status==='影响评估'){
       c.status='审批中';
       if(!c.approvals.length){
-        c.approvals = [{role:'研发',user:'张敏',state:'待审批',date:'',cmt:''},
-                       {role:'质量',user:'陈静',state:'待审批',date:'',cmt:''},
-                       {role:'生产',user:'赵磊',state:'待审批',date:'',cmt:''}];
+        c.approvals = [{role:'研发',user:'张工',state:'待审批',date:'',cmt:''},
+                       {role:'质量',user:'陈工',state:'待审批',date:'',cmt:''},
+                       {role:'生产',user:'赵工',state:'待审批',date:'',cmt:''}];
       }
-      c.history.push({t:nowStr(),u:'张敏',a:'提交多级审批'});
+      c.history.push({t:nowStr(),u:'张工',a:'提交多级审批'});
     }
-    else if(c.status==='审批中'){ c.status='已批准'; c.history.push({t:nowStr(),u:'张敏',a:'所有审批通过，变更批准'}); }
-    else if(c.status==='已批准'){ c.status='实施中'; c.history.push({t:nowStr(),u:'赵磊',a:'开始实施'}); }
-    else if(c.status==='实施中'){ c.status='已关闭'; c.history.push({t:nowStr(),u:'张敏',a:'实施验证完成，关闭变更'}); }
+    else if(c.status==='审批中'){ c.status='已批准'; c.history.push({t:nowStr(),u:'张工',a:'所有审批通过，变更批准'}); }
+    else if(c.status==='已批准'){ c.status='实施中'; c.history.push({t:nowStr(),u:'赵工',a:'开始实施'}); }
+    else if(c.status==='实施中'){ c.status='已关闭'; c.history.push({t:nowStr(),u:'张工',a:'实施验证完成，关闭变更'}); }
     addLog(c.code+' → '+c.status,'change'); save(); render(); openChange(c); toast('状态已更新为「'+c.status+'」');
     return;
   }
@@ -2055,7 +2055,7 @@ function dispatchAct(e){
   if(act==='chg-reject'){
     const c = DB.changes.find(x=>x.id===id);
     const why = prompt('请填写驳回原因：','验证数据不足，请补充三批稳定性数据');
-    if(why){ c.status='已驳回'; c.history.push({t:nowStr(),u:'张敏',a:'驳回：'+why}); save(); render(); openChange(c); toast('已驳回'); }
+    if(why){ c.status='已驳回'; c.history.push({t:nowStr(),u:'张工',a:'驳回：'+why}); save(); render(); openChange(c); toast('已驳回'); }
     return;
   }
   if(act==='exp-chg'){ exportCSV('变更清单',[['变更单号','标题','类型','优先级','状态','发起人','负责人','创建','目标日期'],
@@ -2068,7 +2068,7 @@ function dispatchAct(e){
       + fld('项目名称','name','',{req:true})
       + fld('项目描述','desc','',{type:'textarea',full:true})
       + fld('阶段','stage','概念',{type:'select',options:STAGES})
-      + fld('负责人','owner','张敏')
+      + fld('负责人','owner','张工')
       + fld('开始日期','start',todayStr(),{type:'date'})
       + fld('计划完成','end',todayStr(),{type:'date'})
       + '</div>', okText:'创建', onOk:d=>{
@@ -2122,7 +2122,7 @@ function dispatchAct(e){
       + fld('标题','title',d0.title,{req:true,full:true})
       + fld('版本号','ver',d0.ver||'V1.0')
       + fld('状态','status',d0.status||'草稿',{type:'select',options:['草稿','审核中','生效','已作废']})
-      + fld('责任人','owner',d0.owner||'张敏')
+      + fld('责任人','owner',d0.owner||'张工')
       + fld('关联物料 / 产品','link',d0.link||'',{type:'select',options:[{v:'',t:'（通用文档）'}]
           .concat(DB.materials.map(m=>({v:m.id,t:'物料 · '+m.code+' '+m.name})))
           .concat(DB.products.map(p=>({v:p.id,t:'产品 · '+p.code+' '+p.name})))})
@@ -2158,7 +2158,7 @@ function dispatchAct(e){
       + fld('供应商编码','code',s0.code||'SUP-'+String(DB.suppliers.length+1).padStart(3,'0'),{req:true})
       + fld('准入状态','status',s0.status||'考察中',{type:'select',options:['合格','考察中','暂停']})
       + fld('供应商名称','name',s0.name,{req:true,full:true})
-      + fld('所在地区','region',s0.region,{ph:'如 山东·潍坊'})
+      + fld('所在地区','region',s0.region,{ph:'如 华东地区'})
       + fld('供应类别','cat',s0.cat,{ph:'如 原料 / 辅料 / 包材'})
       + fld('资质证照（逗号分隔）','certs',(s0.certs||[]).join(','),{full:true,ph:'SC 生产许可,ISO 22000,HALAL'})
       + fld('联系人 / 电话','contact',s0.contact,{full:true})
