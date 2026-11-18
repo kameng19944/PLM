@@ -1,0 +1,1973 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NutraPLM · 功能性食品原料研发与产品全生命周期管理</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <div class="logo">N</div>
+      <div><b>NutraPLM</b><span>功能性原料研发管理</span></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot">
+      <b>示例健康科技 · 研发中心</b><br>
+      v3.0 · 服务端数据库 · 多人协作
+    </div>
+  </aside>
+  <div class="main">
+    <header class="top">
+      <div class="crumb" id="crumb"></div>
+      <div class="spacer"></div>
+      <div class="gsearch">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="gq" placeholder="搜索物料 / 物料编码…">
+      </div>
+      <div class="today" id="today"></div>
+      <div class="me">
+        <div class="av">研</div>
+        <div class="nm" id="meName">未登录<i id="meRole">—</i></div>
+      </div>
+    </header>
+    <div class="view" id="view"></div>
+  </div>
+</div>
+<div id="modalRoot"></div>
+<div id="toast"></div>
+
+<script>
+/* ================= 数据层 ================= */
+const KEY = 'nutra_plm_v1';
+const STAGES = ['概念','小试','中试','稳定性','注册申报','量产导入','量产'];
+const FLOW = ['草稿','影响评估','审批中','已批准','实施中','已关闭'];
+
+function seed(){
+  return {
+    meta:{ org:'示例健康科技有限公司', dept:'研发中心', updated:'', schema:2 },
+    libs:[
+      {id:'LIB1',code:'RAW-F',name:'功能性原料库',desc:'十字花科来源活性物、酶制剂等功能性核心原料',color:'#0e8f5f'},
+      {id:'LIB2',code:'RAW-V',name:'维生素与矿物质库',desc:'营养强化剂，按 GB 14880 规定使用',color:'#2361c9'},
+      {id:'LIB3',code:'RAW-P',name:'植物提取物 / 药食同源库',desc:'植物提取物与药食同源原料',color:'#6d4bc0'},
+      {id:'LIB4',code:'RAW-E',name:'食品添加剂与辅料库',desc:'填充剂、助流剂、包衣、甜味剂、酸度调节剂',color:'#b8740a'},
+      {id:'LIB5',code:'PKG',name:'包装材料库',desc:'瓶、袋、箱等食品接触材料',color:'#0d6d72'}
+    ],
+    materials:[
+      {id:'M001',libId:'LIB1',code:'RM-1001',name:'植物提取物 A（活性成分 A 13%）',type:'原料',origin:'植物原料经水提、浓缩、喷雾干燥制得',spec:'活性成分 A≥13.0%，水分≤5.0%，重金属≤10ppm',unit:'kg',price:860,sup:'SUP01',status:'在用',ver:'V2.1',date:'2024-11-08',note:'主力活性原料，西北/华北双基地采购',
+        acts:[['总黄酮（以芦丁计）','≥13.0%','HPLC'],['总多酚','≥18.0%','HPLC'],['水分','≤5.0%','GB 5009.3']],
+        nut:{e:1180,p:9.8,f:0.8,c:58.6,s:4.2,fib:14.5,na:145},
+        regs:[['新食品原料','国家卫生计生委 2017 年第 7 号公告（植物提取物（示例））','普通食品，婴幼儿食品除外','≤600mg/天（以活性成分 A计）'],
+              ['出口','美国 self-GRAS / 欧盟 Novel Food 已授权','膳食补充剂','按目的国法规']],
+        fn:['抗氧化','清除自由基','减少氧化损伤']},
+      {id:'M002',libId:'LIB1',code:'IM-1101',name:'标准化中间体 A（40%）',type:'中间体',origin:'自制：RM-1001 经大孔树脂纯化、微囊化',spec:'活性成分 A 40%±2%，微囊化粉体，D90≤80μm',unit:'kg',price:2786,made:true,sup:'',status:'在用',ver:'V1.3',date:'2024-10-21',note:'自制中间体，单价为折算成本（3kg RM-1001/kg 产品 + 8% 损耗）',
+        acts:[['总黄酮（以芦丁计）','40.0%±2%','HPLC'],['总多酚','≥45.0%','HPLC'],['蛋白质残留','≤1.0%','Kjeldahl']],
+        nut:{e:1250,p:3.2,f:0.3,c:78.4,s:1.1,fib:2.0,na:90},
+        regs:[['新食品原料','沿用 2017 年第 7 号公告（纯化工艺需重新评估）','普通食品，婴幼儿食品除外','≤600mg/天']],
+        fn:['高浓度活性物','便于低剂量成型']},
+      {id:'M003',libId:'LIB1',code:'RM-1002',name:'脂溶性活性物 B（1%）',type:'原料',origin:'酶解转化 + β-环糊精包埋',spec:'活性物 B≥1.0%，环糊精包埋率≥85%',unit:'kg',price:4200,sup:'SUP02',status:'试制',ver:'V1.0',date:'2024-11-15',note:'新剂型开发用，成本敏感；国内仅可出口/跨境',
+        acts:[['活性物 B','≥1.0%','HPLC'],['包埋率','≥85%','UV'],['水分','≤4.0%','GB 5009.3']],
+        nut:{e:1520,p:0.5,f:0.2,c:88.0,s:0.5,fib:0,na:60},
+        regs:[['合规提示','未列入我国新食品原料目录','不得直接用于境内普通食品','需完成安全性评估与申报'],
+              ['美国','Self-affirmed GRAS','膳食补充剂','按 cGMP']],
+        fn:['直接活性形式','高生物利用度']},
+      {id:'M004',libId:'LIB1',code:'RM-1003',name:'复合酶制剂（2000U/g）',type:'原料',origin:'十字花科植物（辣根 / 芥菜籽）分离纯化',spec:'酶活≥2000U/g，水分≤6%',unit:'kg',price:260,sup:'SUP03',status:'在用',ver:'V1.1',date:'2024-08-30',note:'体外转化用，需 2-8℃ 冷链',
+        acts:[['酶活','≥2000 U/g','GB/T 20370'],['水分','≤6.0%','GB 5009.3'],['铅','≤0.5mg/kg','GB 5009.12']],
+        nut:{e:980,p:42.0,f:1.2,c:38.5,s:2.0,fib:6.0,na:210},
+        regs:[['食品添加剂','GB 1886.174《食品工业用酶制剂》','食品加工助剂','按生产需要适量使用']],
+        fn:['催化硫苷转化为活性物 B']},
+      {id:'M013',libId:'LIB1',code:'RM-1004',name:'植物原料（有机，西北产）',type:'原料',origin:'西北有机种植基地',spec:'发芽率≥90%，水分≤9%',unit:'kg',price:18,sup:'SUP06',status:'停用',ver:'V1.0',date:'2024-04-02',note:'供应商资质过期，暂停采购',
+        acts:[['发芽率','≥90%','GB/T 3543'],['水分','≤9.0%','GB 5009.3']],
+        nut:{e:1420,p:24.0,f:12.0,c:45.0,s:3.5,fib:18.0,na:16},
+        regs:[['普通食品原料','有长期食用习惯（十字花科蔬菜种子）','普通食品','无特殊限量']],
+        fn:['原料端自主可控']},
+
+      {id:'M009',libId:'LIB2',code:'VM-4001',name:'维生素 C（抗坏血酸）',type:'原料',origin:'发酵法（山梨醇两步发酵）',spec:'食品级 ≥99.5%，符合 GB 14754',unit:'kg',price:55,sup:'SUP04',status:'在用',ver:'V2.0',date:'2024-02-28',note:'兼作抗氧化剂与营养强化剂',
+        acts:[['抗坏血酸','≥99.5%','GB 14754'],['灼烧残渣','≤0.1%','GB 5009.4']],
+        nut:{e:1650,p:0,f:0,c:99.0,s:0,fib:0,na:5},
+        regs:[['营养强化剂','GB 14880《食品营养强化剂使用标准》','各类食品（见附录 A）','按标准规定量'],
+              ['食品添加剂','GB 14754 抗坏血酸','抗氧化剂','按生产需要适量']],
+        fn:['抗氧化','营养强化','护色']},
+      {id:'M015',libId:'LIB2',code:'VM-4002',name:'维生素 D3（胆钙化醇 100 万 IU/g）',type:'原料',origin:'羊毛脂甾醇经紫外照射',spec:'1,000,000 IU/g，食品级',unit:'kg',price:1600,sup:'SUP04',status:'在用',ver:'V1.0',date:'2024-05-16',note:'微量添加，需预混稀释',
+        acts:[['维生素 D3','1,000,000 IU/g','HPLC'],['重金属','≤10mg/kg','GB 5009.74']],
+        nut:{e:3200,p:0,f:98.0,c:0,s:0,fib:0,na:0},
+        regs:[['营养强化剂','GB 14880 附录 A（维生素 D）','各类食品','2-10 μg/100g（按类别）']],
+        fn:['钙磷代谢','免疫调节']},
+      {id:'M016',libId:'LIB2',code:'VM-4003',name:'氧化锌（Zn 76-80%）',type:'原料',origin:'间接法氧化锌，食品级',spec:'Zn 76-80%，As≤3mg/kg',unit:'kg',price:78,sup:'SUP04',status:'在用',ver:'V1.0',date:'2024-03-06',note:'',
+        acts:[['锌（Zn）','76.0-80.0%','滴定法'],['砷','≤3mg/kg','GB 5009.11']],
+        nut:{e:0,p:0,f:0,c:0,s:0,fib:0,na:0},
+        regs:[['营养强化剂','GB 14880（锌允许来源）','各类食品','5-20 mg/kg（按类别）']],
+        fn:['锌强化','免疫与味觉']},
+      {id:'M017',libId:'LIB2',code:'VM-4004',name:'甘氨酸镁（Mg 14%）',type:'原料',origin:'氧化镁与甘氨酸螯合',spec:'Mg 14.0%±1%，螯合率≥95%',unit:'kg',price:95,sup:'SUP02',status:'试制',ver:'V1.0',date:'2024-11-06',note:'国内使用受限，仅出口/跨境产品',
+        acts:[['镁（Mg）','≥14.0%','滴定法'],['螯合率','≥95%','ICP-MS']],
+        nut:{e:0,p:0,f:0,c:0,s:0,fib:0,na:0},
+        regs:[['合规提示','未列入 GB 14880 镁允许来源（硫酸镁/氧化镁/碳酸镁等）','仅可出口或跨境电商','境内普通食品不可用']],
+        fn:['高吸收率镁源','改善睡眠']},
+
+      {id:'M018',libId:'LIB3',code:'PH-5001',name:'姜黄素（总姜黄素 95%）',type:'原料',origin:'姜黄 Curcuma longa 根茎提取',spec:'总姜黄素≥95%，HPLC',unit:'kg',price:780,sup:'SUP02',status:'在用',ver:'V1.2',date:'2024-09-18',note:'',
+        acts:[['总姜黄素','≥95.0%','HPLC'],['姜黄素单体','≥70.0%','HPLC'],['铅','≤1.0mg/kg','GB 5009.12']],
+        nut:{e:1350,p:6.0,f:4.5,c:70.0,s:2.5,fib:8.5,na:60},
+        regs:[['食品添加剂','GB 1886.76 姜黄素（着色剂）','按 GB 2760 着色剂用途','按生产需要适量'],
+              ['保健食品','《保健食品原料目录》姜黄','保健食品','按目录用量']],
+        fn:['抗炎','抗氧化']},
+      {id:'M019',libId:'LIB3',code:'PH-5002',name:'枸杞提取物（多糖 30%）',type:'原料',origin:'枸杞 Lycium barbarum 果实水提',spec:'枸杞多糖≥30%，水分≤5%',unit:'kg',price:320,sup:'SUP01',status:'在用',ver:'V1.0',date:'2024-07-22',note:'',
+        acts:[['枸杞多糖','≥30.0%','UV 法'],['水分','≤5.0%','GB 5009.3'],['甜菜碱','≥1.0%','HPLC']],
+        nut:{e:1290,p:8.5,f:1.2,c:70.0,s:22.0,fib:6.0,na:180},
+        regs:[['药食同源','卫法监发〔2002〕51 号（既是食品又是药品名单）','普通食品','无特殊限量']],
+        fn:['免疫调节','抗氧化']},
+      {id:'M020',libId:'LIB3',code:'PH-5003',name:'绿茶提取物（EGCG 50%）',type:'原料',origin:'Camellia sinensis 叶片提取',spec:'EGCG≥50%，咖啡因≤3%',unit:'kg',price:520,sup:'SUP02',status:'试制',ver:'V1.0',date:'2024-10-09',note:'高纯度儿茶素国内合规路径待确认',
+        acts:[['EGCG','≥50.0%','HPLC'],['总儿茶素','≥80.0%','HPLC'],['咖啡因','≤3.0%','HPLC']],
+        nut:{e:1180,p:3.0,f:0.3,c:60.0,s:1.0,fib:20.0,na:40},
+        regs:[['合规提示','茶叶为普通食品，但高纯度 EGCG 浓缩物无明确依据','建议按新食品原料申报','未获批前仅限出口']],
+        fn:['抗氧化','代谢支持']},
+
+      {id:'M005',libId:'LIB4',code:'EX-2001',name:'微晶纤维素 PH102',type:'辅料',origin:'精制木浆 α-纤维素水解',spec:'符合 ChP2020 / USP-NF，粒径 100μm',unit:'kg',price:38,sup:'SUP04',status:'在用',ver:'V2.0',date:'2024-06-11',note:'',
+        acts:[['纤维素含量','97.0-102.0%','ChP 通则'],['干燥失重','≤7.0%','ChP 通则']],
+        nut:{e:0,p:0,f:0,c:99.0,s:0,fib:99.0,na:0},
+        regs:[['食品添加剂','GB 1886.103 微晶纤维素','按 GB 2760 抗结剂/增稠剂','按生产需要适量']],
+        fn:['填充剂','干粘合剂（直压）']},
+      {id:'M006',libId:'LIB4',code:'EX-2002',name:'硬脂酸镁',type:'辅料',origin:'植物源硬脂酸镁盐',spec:'粒径 10-20μm，植物源',unit:'kg',price:46,sup:'SUP04',status:'在用',ver:'V1.4',date:'2024-06-11',note:'',
+        acts:[['硬脂酸镁含量','≥95.0%','滴定法'],['细度','≥99% 过 100 目','筛分']],
+        nut:{e:0,p:0,f:96.0,c:0,s:0,fib:0,na:0},
+        regs:[['食品添加剂','GB 1886.169 硬脂酸镁','抗结剂','按生产需要适量']],
+        fn:['润滑剂','脱模']},
+      {id:'M007',libId:'LIB4',code:'EX-2003',name:'二氧化硅（助流剂）',type:'辅料',origin:'气相法二氧化硅',spec:'食品级，比表面积≥180m²/g',unit:'kg',price:28,sup:'SUP04',status:'在用',ver:'V1.2',date:'2024-05-20',note:'',
+        acts:[['二氧化硅含量','≥99.0%','GB 25576'],['比表面积','≥180 m²/g','BET']],
+        nut:{e:0,p:0,f:0,c:0,s:0,fib:0,na:0},
+        regs:[['食品添加剂','GB 25576 二氧化硅','抗结剂（GB 2760 附表 A.1）','按食品类别限量（如固体饮料 15g/kg）']],
+        fn:['助流','抗结块']},
+      {id:'M008',libId:'LIB4',code:'EX-2004',name:'羟丙甲纤维素 E5（包衣）',type:'辅料',origin:'精制棉纤维素醚化',spec:'黏度 4-6mPa·s（2% 水溶液）',unit:'kg',price:96,sup:'SUP04',status:'在用',ver:'V1.0',date:'2024-03-14',note:'',
+        acts:[['羟丙氧基','7.0-12.0%','ChP 通则'],['黏度','4-6 mPa·s','旋转黏度计']],
+        nut:{e:0,p:0,f:0,c:98.0,s:0,fib:98.0,na:0},
+        regs:[['食品添加剂','GB 1886.109 羟丙基甲基纤维素','增稠剂/被膜剂','按生产需要适量']],
+        fn:['薄膜包衣','防潮掩味']},
+      {id:'M014',libId:'LIB4',code:'EX-2006',name:'麦芽糊精 DE18',type:'辅料',origin:'玉米淀粉酶法水解',spec:'食品级，DE 值 16-20',unit:'kg',price:9.5,sup:'SUP04',status:'在用',ver:'V1.0',date:'2024-02-02',note:'',
+        acts:[['DE 值','16-20','GB/T 20882'],['水分','≤6.0%','GB 5009.3']],
+        nut:{e:1600,p:0.5,f:0.1,c:94.0,s:3.0,fib:0,na:25},
+        regs:[['普通食品原料','GB/T 20882 淀粉糖','各类食品','无特殊限量']],
+        fn:['载体','填充','改善流动性']},
+      {id:'M021',libId:'LIB4',code:'EX-2007',name:'三氯蔗糖（甜味剂）',type:'辅料',origin:'蔗糖氯化衍生物',spec:'食品级 ≥98.0%',unit:'kg',price:260,sup:'SUP04',status:'在用',ver:'V1.0',date:'2024-04-18',note:'',
+        acts:[['三氯蔗糖','≥98.0%','HPLC'],['相关物质','≤1.0%','HPLC']],
+        nut:{e:0,p:0,f:0,c:0,s:0,fib:0,na:0},
+        regs:[['食品添加剂','GB 25531 三氯蔗糖','甜味剂（GB 2760）','饮料类 0.25g/kg；固体饮料按稀释倍数折算']],
+        fn:['高倍甜味','零热量']},
+      {id:'M022',libId:'LIB4',code:'EX-2008',name:'柠檬酸（无水）',type:'辅料',origin:'发酵法（黑曲霉）',spec:'食品级 ≥99.5%',unit:'kg',price:12,sup:'SUP04',status:'在用',ver:'V1.0',date:'2024-01-25',note:'',
+        acts:[['柠檬酸','≥99.5%','GB 1886.235'],['水分','≤0.5%','GB 5009.3']],
+        nut:{e:1050,p:0,f:0,c:100.0,s:0,fib:0,na:0},
+        regs:[['食品添加剂','GB 1886.235 柠檬酸','酸度调节剂','按生产需要适量']],
+        fn:['酸度调节','风味增强']},
+      {id:'M023',libId:'LIB4',code:'EX-2009',name:'山梨酸钾（防腐剂）',type:'辅料',origin:'山梨酸与氢氧化钾中和',spec:'食品级 99.0-101.0%',unit:'kg',price:32,sup:'SUP04',status:'在用',ver:'V1.0',date:'2024-01-25',note:'',
+        acts:[['山梨酸钾','99.0-101.0%','GB 1886.39'],['重金属','≤10mg/kg','GB 5009.74']],
+        nut:{e:0,p:0,f:0,c:0,s:0,fib:0,na:0},
+        regs:[['食品添加剂','GB 1886.39 山梨酸钾','防腐剂（GB 2760）','按食品类别限量（饮料 0.5g/kg 等）']],
+        fn:['防腐','延长货架期']},
+
+      {id:'M010',libId:'LIB5',code:'PK-3001',name:'HDPE 瓶 60mL（避光）',type:'包材',origin:'高密度聚乙烯注吹成型',spec:'带儿童安全盖，符合 YBB 标准',unit:'个',price:1.35,sup:'SUP05',status:'在用',ver:'V1.2',date:'2024-07-09',note:'',
+        acts:[['容量','60 mL','—'],['材质','HDPE','—'],['密封性','合格','负压法']],
+        nut:null,
+        regs:[['食品接触材料','GB 4806.7 塑料材料及制品','直接接触食品','符合迁移量要求']],
+        fn:['避光包装','防潮']},
+      {id:'M011',libId:'LIB5',code:'PK-3002',name:'铝箔袋（避光复合）',type:'包材',origin:'PET/AL/PE 三层复合',spec:'水蒸气透过≤0.5g/m²·24h',unit:'个',price:0.42,sup:'SUP05',status:'在用',ver:'V1.1',date:'2024-07-09',note:'',
+        acts:[['材质结构','PET/AL/PE','—'],['水蒸气透过','≤0.5 g/m²·24h','GB/T 1037']],
+        nut:null,
+        regs:[['食品接触材料','GB 4806.7 / GB 4806.9','直接接触食品','符合迁移量要求']],
+        fn:['高阻隔','条装分装']},
+      {id:'M012',libId:'LIB5',code:'PK-3003',name:'纸箱（24 瓶装）',type:'包材',origin:'五层瓦楞纸板',spec:'承重 15kg，印刷四色',unit:'个',price:3.6,sup:'SUP05',status:'在用',ver:'V1.0',date:'2024-01-18',note:'',
+        acts:[['耐破强度','≥1200 kPa','GB/T 6545'],['层数','5 层','—']],
+        nut:null,
+        regs:[['食品接触材料','GB 4806.8 纸和纸板材料','间接接触','符合迁移量要求']],
+        fn:['运输包装']}
+    ],
+    products:[
+      {id:'P001',code:'FG-1001',name:'植物提取物 A 片（活性成分 A 20mg/片）',form:'片剂',spec:'60 片/瓶，0.5g/片',stage:'量产',owner:'张工',base:'每千片',date:'2024-09-12',
+        bom:[
+          {id:'n1',mid:'M002',qty:0.05,unit:'kg',loss:2,children:[{id:'n1a',mid:'M001',qty:3,unit:'kg',loss:8,children:[]}]},
+          {id:'n2',mid:'M005',qty:0.38,unit:'kg',loss:3,children:[]},
+          {id:'n3',mid:'M008',qty:0.02,unit:'kg',loss:5,children:[]},
+          {id:'n4',mid:'M006',qty:0.005,unit:'kg',loss:1,children:[]},
+          {id:'n5',mid:'M007',qty:0.004,unit:'kg',loss:1,children:[]},
+          {id:'n6',mid:'M010',qty:17,unit:'个',loss:0,children:[]},
+          {id:'n7',mid:'M012',qty:1,unit:'个',loss:0,children:[]}
+        ]},
+      {id:'P002',code:'FG-1002',name:'活性物 B 软胶囊（活性物 B 5mg/粒）',form:'胶囊',spec:'60 粒/瓶，0.8g/粒',stage:'中试',owner:'李工',base:'每千粒',date:'2024-10-30',
+        bom:[
+          {id:'n1',mid:'M003',qty:0.65,unit:'kg',loss:3,children:[]},
+          {id:'n2',mid:'M004',qty:0.02,unit:'kg',loss:2,children:[]},
+          {id:'n3',mid:'M011',qty:17,unit:'个',loss:0,children:[]},
+          {id:'n4',mid:'M012',qty:1,unit:'个',loss:0,children:[]}
+        ]},
+      {id:'P003',code:'FG-1003',name:'植物提取物 A 固体饮料（条装 3g）',form:'粉剂',spec:'30 条/盒，3g/条',stage:'量产',owner:'王工',base:'每千条',date:'2024-08-05',
+        bom:[
+          {id:'n1',mid:'M001',qty:1.2,unit:'kg',loss:2,children:[]},
+          {id:'n2',mid:'M014',qty:1.6,unit:'kg',loss:2,children:[]},
+          {id:'n3',mid:'M009',qty:0.05,unit:'kg',loss:1,children:[]},
+          {id:'n4',mid:'M011',qty:1000,unit:'个',loss:1,children:[]},
+          {id:'n5',mid:'M012',qty:42,unit:'个',loss:0,children:[]}
+        ]},
+      {id:'P004',code:'FG-1004',name:'酶制剂复合粉',form:'粉剂',spec:'1kg/袋，酶活 1600U/g',stage:'研发',owner:'陈工',base:'每袋',date:'2024-11-18',
+        bom:[
+          {id:'n1',mid:'M004',qty:0.8,unit:'kg',loss:2,children:[]},
+          {id:'n2',mid:'M014',qty:0.2,unit:'kg',loss:2,children:[]},
+          {id:'n3',mid:'M011',qty:1,unit:'个',loss:0,children:[]}
+        ]}
+    ],
+    changes:[
+      {id:'C001',code:'ECN-2024-018',title:'植物提取物 A 供应商变更（华北 → 华东）',type:'供应商变更',pri:'高',status:'审批中',
+        initiator:'李工',owner:'王工',created:'2024-11-02',due:'2024-11-22',affected:['M001','P001','P003'],
+        desc:'华北基地基地 2024 年减产，为保证交付，申请切换至华东基地工厂供货。需完成小试比对、稳定性桥接与包材相容性复核。',
+        approvals:[{role:'研发',user:'张工',state:'已通过',date:'2024-11-05',cmt:'含量与指纹图谱一致'},
+                   {role:'质量',user:'陈工',state:'待审批',date:'',cmt:''},
+                   {role:'生产',user:'赵工',state:'待审批',date:'',cmt:''},
+                   {role:'法规',user:'周工',state:'待审批',date:'',cmt:''}],
+        history:[{t:'2024-11-02 09:12',u:'李工',a:'创建变更申请'},{t:'2024-11-05 14:30',u:'张工',a:'研发审批通过'},{t:'2024-11-06 10:02',u:'王工',a:'提交评审'}]},
+      {id:'C002',code:'ECR-2024-021',title:'片重由 0.5g 调整为 0.4g（降本 8%）',type:'配方变更',pri:'中',status:'影响评估',
+        initiator:'张工',owner:'张工',created:'2024-11-11',due:'2024-12-06',affected:['P001'],
+        desc:'通过提高中间体占比、下调填充剂比例，将片重降至 0.4g。需评估硬度、崩解时限与货架期稳定性。',
+        approvals:[{role:'研发',user:'张工',state:'待审批',date:'',cmt:''},{role:'质量',user:'陈工',state:'待审批',date:'',cmt:''}],
+        history:[{t:'2024-11-11 16:20',u:'张工',a:'创建变更申请'},{t:'2024-11-12 09:05',u:'张工',a:'进入影响评估'}]},
+      {id:'C003',code:'ECN-2024-015',title:'60mL HDPE 瓶切换为避光铝塑泡罩',type:'包装变更',pri:'中',status:'实施中',
+        initiator:'王工',owner:'赵工',created:'2024-10-08',due:'2024-11-30',affected:['M010','P001'],
+        desc:'客户反馈瓶装携带不便，切换泡罩包装。涉及包材新开模、装箱规格调整与标签改版。',
+        approvals:[{role:'研发',user:'张工',state:'已通过',date:'2024-10-10',cmt:''},{role:'质量',user:'陈工',state:'已通过',date:'2024-10-12',cmt:'相容性合格'},
+                   {role:'生产',user:'赵工',state:'已通过',date:'2024-10-15',cmt:''}],
+        history:[{t:'2024-10-08 11:00',u:'王工',a:'创建变更申请'},{t:'2024-10-15 17:40',u:'赵工',a:'审批通过，开始实施'}]},
+      {id:'C004',code:'ECR-2024-009',title:'活性成分 A 含量指标由 ≥13% 提升至 ≥20%',type:'规格变更',pri:'高',status:'已关闭',
+        initiator:'张工',owner:'张工',created:'2024-05-20',due:'2024-08-30',affected:['M001','M002','P003'],
+        desc:'对标竞品规格，提升提取物含量标准。已完成工艺放大与客户通知。',
+        approvals:[{role:'研发',user:'张工',state:'已通过',date:'2024-06-01',cmt:''},{role:'质量',user:'陈工',state:'已通过',date:'2024-06-05',cmt:''},
+                   {role:'法规',user:'周工',state:'已通过',date:'2024-06-09',cmt:'标签已同步更新'}],
+        history:[{t:'2024-05-20 10:00',u:'张工',a:'创建变更申请'},{t:'2024-08-28 15:00',u:'张工',a:'验证完成，关闭变更'}]},
+      {id:'C005',code:'ECR-2024-024',title:'新增酶制剂供应商（双源保障）',type:'供应商变更',pri:'低',status:'草稿',
+        initiator:'陈工',owner:'陈工',created:'2024-11-19',due:'2024-12-20',affected:['M004','P002','P004'],
+        desc:'现独家供应存在断供风险，拟引入第二供应商，需完成资质审核与三批小样验证。',
+        approvals:[],history:[{t:'2024-11-19 09:40',u:'陈工',a:'创建变更申请（草稿）'}]},
+      {id:'C006',code:'ECN-2024-011',title:'提取工艺由水提改为酶辅助水提',type:'工艺变更',pri:'高',status:'已批准',
+        initiator:'李工',owner:'李工',created:'2024-07-02',due:'2024-11-15',affected:['M002','P001','P003'],
+        desc:'引入纤维素酶辅助提取，活性成分 A收率提升约 12%，需重新验证杂质谱与溶剂残留。',
+        approvals:[{role:'研发',user:'张工',state:'已通过',date:'2024-07-15',cmt:''},{role:'质量',user:'陈工',state:'已通过',date:'2024-07-20',cmt:''},
+                   {role:'生产',user:'赵工',state:'已通过',date:'2024-07-25',cmt:'设备可兼容'}],
+        history:[{t:'2024-07-02 14:10',u:'李工',a:'创建变更申请'},{t:'2024-07-25 16:22',u:'张工',a:'变更批准，待排产实施'}]}
+    ],
+    docs:[
+      {id:'D001',code:'SOP-MFG-012',title:'提取车间工艺操作规程（酶辅助水提）',type:'SOP',ver:'V3.2',status:'生效',link:'M002',owner:'赵工',date:'2024-09-12',expire:'2026-09-11'},
+      {id:'D002',code:'SPEC-RM-1001',title:'植物提取物 A 采购规格书',type:'规格书',ver:'V2.1',status:'生效',link:'M001',owner:'张工',date:'2024-11-08',expire:'2025-11-07'},
+      {id:'D003',code:'COA-2024-1187',title:'RM-1001 批次检验报告（B2409-1187）',type:'COA',ver:'-',status:'生效',link:'M001',owner:'陈工',date:'2024-11-05',expire:'2025-11-04'},
+      {id:'D004',code:'REG-NFI-2024',title:'植物提取物 A 新食品原料申报材料',type:'法规文件',ver:'V1.4',status:'审核中',link:'M001',owner:'周工',date:'2024-10-28',expire:'2025-10-27'},
+      {id:'D005',code:'RPT-STA-031',title:'FG-1001 加速稳定性试验报告（6 个月）',type:'研究报告',ver:'V1.0',status:'生效',link:'P001',owner:'陈工',date:'2024-08-16',expire:'2025-02-02'},
+      {id:'D006',code:'SOP-QA-008',title:'供应商现场审计管理规程',type:'SOP',ver:'V2.0',status:'生效',link:'',owner:'陈工',date:'2024-04-10',expire:'2025-01-15'},
+      {id:'D007',code:'LBL-FG-1001',title:'FG-1001 标签稿件（含功能声称）',type:'标签稿件',ver:'V3.0',status:'草稿',link:'P001',owner:'王工',date:'2024-11-16',expire:''},
+      {id:'D008',code:'COA-2023-0912',title:'RM-1001 批次检验报告（B2308-0912）',type:'COA',ver:'-',status:'已作废',link:'M001',owner:'陈工',date:'2023-08-20',expire:'2024-08-19'}
+    ],
+    projects:[
+      {id:'J001',code:'PRJ-2024-03',name:'活性物 B 微囊化中试放大',stage:'中试',prog:68,owner:'李工',start:'2024-06-01',end:'2024-12-31',
+       desc:'以 β-环糊精包埋提升活性物 B稳定性，目标包埋率≥85%，中试批量 50kg。',ms:['包埋工艺确定','中试三批验证','稳定性 3 月数据','转量产评审']},
+      {id:'J002',code:'PRJ-2024-06',name:'高含量植物提取物（≥40%）工艺开发',stage:'小试',prog:45,owner:'张工',start:'2024-08-15',end:'2025-03-31',
+       desc:'通过大孔树脂纯化将活性成分 A含量提升至 40% 以上，收率不低于 65%。',ms:['树脂选型','纯化参数优化','小试三批','成本测算']},
+      {id:'J003',code:'PRJ-2025-01',name:'植物提取物 A 新食品原料申报',stage:'注册申报',prog:30,owner:'周工',start:'2024-09-01',end:'2025-09-30',
+       desc:'完成安全性评估、工艺必要性与标签合规材料，提交国家卫健委受理。',ms:['材料起草','安全性评估','专家论证','正式受理']},
+      {id:'J004',code:'PRJ-2024-09',name:'缓释片配方开发（12 小时释放）',stage:'概念',prog:15,owner:'陈工',start:'2024-11-01',end:'2025-06-30',
+       desc:'骨架型缓释体系，目标 2h 释放 30%、12h 释放 ≥90%。',ms:['骨架材料筛选','释放曲线方法学','处方确定']},
+      {id:'J005',code:'PRJ-2023-11',name:'固体饮料产线放大与量产导入',stage:'量产导入',prog:92,owner:'王工',start:'2023-11-20',end:'2024-11-30',
+       desc:'条装线产能由 5 万条/日提升至 12 万条/日，完成 OQ/PQ 验证。',ms:['设备安装','OQ 验证','PQ 三批','量产移交']}
+    ],
+    suppliers:[
+      {id:'SUP01',code:'SUP-001',name:'供应商 A（植物原料，示例）',region:'华东地区',cat:'原料',certs:['SC 生产许可','ISO 22000','HALAL','有机认证'],status:'合格',since:'2019-03',contact:'联系人 138****0000'},
+      {id:'SUP02',code:'SUP-002',name:'供应商 B（提取物，示例）',region:'华东地区',cat:'原料 / 中间体',certs:['SC 生产许可','ISO 9001','KOSHER'],status:'合格',since:'2022-07',contact:'联系人 139****0000'},
+      {id:'SUP03',code:'SUP-003',name:'供应商 C（酶制剂，示例）',region:'西北地区',cat:'酶制剂',certs:['SC 生产许可','FSSC 22000'],status:'考察中',since:'2024-10',contact:'联系人 137****0000'},
+      {id:'SUP04',code:'SUP-004',name:'供应商 D（辅料，示例）',region:'华中地区',cat:'辅料',certs:['CDE 登记 A','ISO 9001','EXCiPACT'],status:'合格',since:'2018-05',contact:'联系人 135****0000'},
+      {id:'SUP05',code:'SUP-005',name:'供应商 E（包材，示例）',region:'华东地区',cat:'包材',certs:['药包材注册证','ISO 15378'],status:'合格',since:'2020-09',contact:'联系人 136****0000'},
+      {id:'SUP06',code:'SUP-006',name:'供应商 F（有机种植基地，示例）',region:'西北地区',cat:'农产品',certs:['有机认证'],status:'暂停',since:'2021-04',contact:'联系人 133****0000'}
+    ],
+    formulas:[
+      {id:'F001',code:'FRM-1001',name:'植物提取物 A 片芯配方（0.5g/片）',ver:'V2.0',status:'已存档',batch:100,yieldRate:96,
+       servings:200000,servingUnit:'片',product:'P001',owner:'张工',date:'2024-11-10',
+       note:'100kg 片芯批量，对应 20 万片；中间体由 RM-1001 自制成，单价按折算成本计。',
+       items:[{ing:'M002',qty:12.5,loss:2},{ing:'M005',qty:62,loss:3},{ing:'M008',qty:3.2,loss:5},
+              {ing:'M006',qty:1.0,loss:1},{ing:'M007',qty:0.8,loss:1},{ing:'M009',qty:1.5,loss:1}],
+       archives:[{ver:'V1.0',date:'2024-06-18',user:'张工',cost:45365.84,unit:472.56,per:0.2268,
+         items:[{ing:'M002',qty:15,loss:2,price:2786},{ing:'M005',qty:60,loss:3,price:38},{ing:'M008',qty:3.2,loss:5,price:96},
+                {ing:'M006',qty:1.0,loss:1,price:46},{ing:'M007',qty:0.8,loss:1,price:28}]}]},
+      {id:'F002',code:'FRM-1002',name:'活性物 B 软胶囊内容物配方',ver:'V1.1',status:'草稿',batch:50,yieldRate:98,
+       servings:62500,servingUnit:'粒',product:'P002',owner:'李工',date:'2024-11-16',
+       note:'内容物 0.8g/粒，环糊精包埋体系，需评估高温压丸稳定性。',
+       items:[{ing:'M003',qty:32,loss:3},{ing:'M004',qty:1.0,loss:2},{ing:'M014',qty:15,loss:2},{ing:'M009',qty:0.5,loss:1}],
+       archives:[]},
+      {id:'F003',code:'FRM-1003',name:'植物提取物 A 固体饮料配方（3g/条）',ver:'V3.0',status:'已存档',batch:200,yieldRate:99,
+       servings:66000,servingUnit:'条',product:'P003',owner:'王工',date:'2024-11-18',
+       note:'200kg 粉体批量，对应 6.6 万条；甜味体系已由蔗糖改为三氯蔗糖。',
+       items:[{ing:'M001',qty:78,loss:2},{ing:'M014',qty:100,loss:2},{ing:'M009',qty:3,loss:1},
+              {ing:'M021',qty:0.6,loss:0},{ing:'M022',qty:1.5,loss:0}],
+       archives:[{ver:'V2.0',date:'2024-05-10',user:'王工',cost:71441.65,unit:360.82,per:1.0824,
+         items:[{ing:'M001',qty:80,loss:2,price:860},{ing:'M014',qty:100,loss:2,price:9.5},
+                {ing:'M009',qty:3,loss:1,price:55},{ing:'M021',qty:0.5,loss:0,price:260}]}]},
+      {id:'F004',code:'FRM-2001',name:'复合维生素矿物质粉（出口，4g/份）',ver:'V1.0',status:'草稿',batch:20,yieldRate:98,
+       servings:5000,servingUnit:'份',product:'',owner:'陈工',date:'2024-11-19',
+       note:'出口配方，含甘氨酸镁（境内未列入 GB 14880 镁来源，仅限出口）。',
+       items:[{ing:'M009',qty:5,loss:1},{ing:'M015',qty:0.02,loss:0},{ing:'M016',qty:0.35,loss:1},
+              {ing:'M017',qty:6,loss:1},{ing:'M014',qty:8,loss:2}],
+       archives:[]},
+      {id:'F005',code:'FRM-1004',name:'姜黄素复合片配方（0.5g/片）',ver:'V1.0',status:'草稿',batch:80,yieldRate:96,
+       servings:160000,servingUnit:'片',product:'',owner:'张工',date:'2024-11-20',
+       note:'概念验证配方，姜黄素占比 15%，待做溶出与稳定性。',
+       items:[{ing:'M018',qty:12,loss:2},{ing:'M005',qty:55,loss:3},{ing:'M008',qty:2.4,loss:5},
+              {ing:'M006',qty:0.8,loss:1},{ing:'M007',qty:0.6,loss:1},{ing:'M009',qty:1.2,loss:1}],
+       archives:[]}
+    ],
+    log:[
+      {t:'2024-11-19 09:40',u:'陈工',a:'创建变更申请 ECR-2024-024',k:'change'},
+      {t:'2024-11-18 15:12',u:'陈工',a:'新建产品 FG-1004 酶制剂复合粉',k:'product'},
+      {t:'2024-11-16 10:05',u:'王工',a:'上传标签稿件 LBL-FG-1001 V3.0',k:'doc'},
+      {t:'2024-11-15 14:22',u:'李工',a:'新增物料 RM-1002 活性物 B（试制）',k:'material'},
+      {t:'2024-11-12 09:05',u:'张工',a:'ECR-2024-021 进入影响评估',k:'change'}
+    ]
+  };
+}
+
+let DB = null;            /* 由 enhance.js 从后端加载 */
+let DB_VER = 0;           /* 服务端数据版本，用于并发冲突检测 */
+let CURRENT_USER = null;  /* 当前登录用户 */
+/* v1 → v2 结构升级：补齐原辅料多库、功效/营养/法规字段与配方数据 */
+function migrate(db){
+  if(db.meta && db.meta.schema>=2) return db;
+  const s = seed();
+  (db.materials||[]).forEach(m=>{
+    const sm = s.materials.find(x=>x.id===m.id);
+    if(sm){ ['libId','origin','acts','nut','regs','fn','made'].forEach(k=>{ if(m[k]===undefined) m[k]=sm[k]; }); }
+    if(!m.libId) m.libId='LIB1';
+    if(!Array.isArray(m.acts)) m.acts=[];
+    if(!Array.isArray(m.regs)) m.regs=[];
+    if(!Array.isArray(m.fn)) m.fn=[];
+    if(m.nut===undefined) m.nut=null;
+  });
+  s.materials.forEach(sm=>{ if(!db.materials.find(m=>m.id===sm.id)) db.materials.push(sm); });
+  db.libs = s.libs;
+  db.formulas = s.formulas;
+  db.meta = Object.assign({}, s.meta, {schema:2});
+  return db;
+}
+/* 兼容旧数据结构的迁移函数保留；服务端数据已是 schema 2 */
+function save(){
+  const A = window.PLM_API;
+  if(!A || !A.token) return;   /* 未登录/离线预览时跳过 */
+  A.commit(DB).then(r=>{ DB_VER = r.version; })
+    .catch(err=>{
+      if(err && err.status===409){ toast('数据已被他人更新，正在重新载入…'); A.reload(); }
+      else toast('保存失败：'+(err && err.message || '网络错误'));
+    });
+}
+function uid(p){ return p + Date.now().toString(36).slice(-5) + Math.random().toString(36).slice(2,5); }
+function nextVer(v){ const m=/V\s*(\d+)\.(\d+)/i.exec(v||''); return m? 'V'+(parseInt(m[1])+1)+'.0' : 'V1.0'; }
+function nowStr(){ const d=new Date(); const p=n=>String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()); }
+function todayStr(){ return nowStr().slice(0,10); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function mat(id){ return DB.materials.find(m=>m.id===id) || null; }
+function matName(id){ const m=mat(id); return m? m.name : '（物料已删除）'; }
+function supName(id){ const s=DB.suppliers.find(x=>x.id===id); return s? s.name : '—'; }
+function addLog(a,k){ DB.log.unshift({t:nowStr(),u:'张工',a:a,k:k||'other'}); DB.log = DB.log.slice(0,40); }
+
+/* ================= 成本计算 ================= */
+function unitCost(n){
+  if(n.children && n.children.length){
+    return n.children.reduce((s,c)=> s + c.qty*unitCost(c), 0) * (1+(n.loss||0)/100);
+  }
+  const m = mat(n.mid);
+  return m ? (m.price||0) : 0;
+}
+function lineCost(n){ return (n.children && n.children.length) ? n.qty*unitCost(n) : n.qty*unitCost(n)*(1+(n.loss||0)/100); }
+function bomCost(bom){ return (bom||[]).reduce((s,n)=> s+lineCost(n), 0); }
+function countNodes(bom){ return (bom||[]).reduce((s,n)=> s+1+countNodes(n.children), 0); }
+
+/* ================= 通用 UI ================= */
+function toast(msg){
+  const box = document.getElementById('toast');
+  const d = document.createElement('div');
+  d.className='tst'; d.innerHTML = '<span class="ok">✓</span>' + esc(msg);
+  box.appendChild(d);
+  setTimeout(()=>{ d.style.opacity='0'; d.style.transition='.3s'; setTimeout(()=>d.remove(),300); }, 2100);
+}
+function toneOf(v){
+  const map = {
+    '在用':'t-green','试制':'t-amber','停用':'t-gray','量产':'t-green','中试':'t-blue','研发':'t-amber',
+    '草稿':'t-gray','影响评估':'t-amber','审批中':'t-blue','已批准':'t-teal','实施中':'t-purple','已关闭':'t-green','已驳回':'t-red',
+    '生效':'t-green','审核中':'t-amber','已作废':'t-gray','合格':'t-green','考察中':'t-amber','暂停':'t-red',
+    '已存档':'t-green','已作废配方':'t-gray',
+    '高':'t-red','中':'t-amber','低':'t-gray','概念':'t-gray','小试':'t-amber','稳定性':'t-blue','注册申报':'t-purple','量产导入':'t-teal'
+  };
+  return map[v] || 't-gray';
+}
+function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
+let modalOk = null;
+function openModal(opt){
+  const {title, body, okText='保存', size='', onOk} = opt;
+  modalOk = onOk || null;
+  document.getElementById('modalRoot').innerHTML =
+    '<div class="mask" id="mask"><div class="modal '+size+'">'
+    + '<div class="m-h"><h3>'+esc(title)+'</h3><button class="x" id="mx">×</button></div>'
+    + '<div class="m-b"><form id="mform">'+body+'</form></div>'
+    + '<div class="m-f"><button class="btn ghost" id="mc">取消</button>'
+    + (onOk ? '<button class="btn primary" id="mok">'+esc(okText)+'</button>' : '')
+    + '</div></div></div>';
+  document.getElementById('mx').onclick = closeModal;
+  document.getElementById('mc').onclick = closeModal;
+  document.getElementById('mform').addEventListener('submit', e=> e.preventDefault());
+  document.getElementById('mask').addEventListener('click', e=>{ if(e.target.id==='mask') closeModal(); });
+  const ok = document.getElementById('mok');
+  if(ok) ok.onclick = ()=>{
+    const f = document.getElementById('mform');
+    if(!f.reportValidity()) return;
+    const data = {};
+    new FormData(f).forEach((v,k)=> data[k]=v);
+    const r = modalOk(data);
+    if(r !== false){ closeModal(); }
+  };
+}
+function viewOnlyModal(title, body, size){ openModal({title, body, size, onOk:null}); }
+
+function fld(label,name,value,opt){
+  opt = opt||{};
+  const v = value==null?'':esc(value);
+  if(opt.type==='textarea') return '<div class="fld '+(opt.full?'full':'')+'"><label>'+label+(opt.req?' <i>*</i>':'')+'</label><textarea name="'+name+'" '+(opt.req?'required':'')+' placeholder="'+esc(opt.ph||'')+'">'+v+'</textarea></div>';
+  if(opt.type==='select'){
+    const opts = opt.options.map(o=>{
+      const val = typeof o==='object'? o.v : o, txt = typeof o==='object'? o.t : o;
+      return '<option value="'+esc(val)+'" '+(String(val)===String(value)?'selected':'')+'>'+esc(txt)+'</option>';
+    }).join('');
+    return '<div class="fld '+(opt.full?'full':'')+'"><label>'+label+(opt.req?' <i>*</i>':'')+'</label><select name="'+name+'" '+(opt.req?'required':'')+'>'+opts+'</select></div>';
+  }
+  return '<div class="fld '+(opt.full?'full':'')+'"><label>'+label+(opt.req?' <i>*</i>':'')+'</label>'
+    +'<input name="'+name+'" type="'+(opt.type||'text')+'" value="'+v+'" '+(opt.req?'required':'')+' placeholder="'+esc(opt.ph||'')+'" '
+    +(opt.step?'step="'+opt.step+'"':'')+(opt.min!=null?'min="'+opt.min+'"':'')+'>'+'</div>';
+}
+
+/* ================= 路由 ================= */
+const NAV = [
+  {k:'dashboard', t:'工作台', ic:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'},
+  {k:'materials', t:'原辅料系统', ic:'<path d="M12 2.8 21 7.4v9.2L12 21.2 3 16.6V7.4z"/><path d="M3 7.4l9 4.6 9-4.6M12 12v9"/>'},
+  {k:'formulas',  t:'配方系统', ic:'<path d="M9 3h6M10 3v6.6L5.6 18a2 2 0 0 0 1.7 3h9.4a2 2 0 0 0 1.7-3L14 9.6V3"/><path d="M7.6 14.5h8.8"/>'},
+  {k:'products',  t:'产品与 BOM', ic:'<path d="M12 3 3 7.5 12 12l9-4.5z"/><path d="M3 12l9 4.5 9-4.5M3 16.5 12 21l9-4.5"/>'},
+  {k:'changes',   t:'变更管理', ic:'<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>'},
+  {k:'projects',  t:'研发项目', ic:'<path d="M4 20V4"/><path d="M4 5h11l-1.6 4L15 13H4"/><circle cx="4" cy="20" r="1.2"/>'},
+  {k:'docs',      t:'文档与合规', ic:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/>'},
+  {k:'suppliers', t:'供应商', ic:'<path d="M3 21V7l7-4v18"/><path d="M10 21V9l7 3v9"/><path d="M6 9v.01M6 13v.01M6 17v.01M14 13v.01M14 17v.01"/>'},
+  {k:'data',      t:'数据管理', ic:'<ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>'}
+];
+let cur = 'dashboard';
+const ui = {mQ:'', mType:'', cQ:'', cStatus:'', dQ:'', dType:'', sQ:'', treeOpen:{}};
+
+function renderNav(){
+  const pending = DB.changes.filter(c=> c.status==='影响评估' || c.status==='审批中').length;
+  document.getElementById('nav').innerHTML = '<div class="group">产品生命周期</div>' + NAV.map(n=>{
+    const badge = (n.k==='changes' && pending)? '<span class="dot">'+pending+'</span>' : '';
+    return '<a data-act="nav" data-k="'+n.k+'" title="'+n.t+'" class="'+(cur===n.k?'on':'')+'"><svg viewBox="0 0 24 24">'+n.ic+'</svg><span>'+n.t+'</span>'+badge+'</a>';
+  }).join('');
+}
+function go(k){
+  if(k!=='formulas'){ ui.formulaId=null; ui.editing=null; ui.dirty=false; }
+  cur = k; closeModal(); render(); document.getElementById('view').scrollTop = 0;
+}
+function render(){
+  renderNav();
+  const item = NAV.find(n=>n.k===cur);
+  document.getElementById('crumb').innerHTML = '<b>'+item.t+'</b>';
+  document.getElementById('today').textContent = todayStr() + ' ' + ['周日','周一','周二','周三','周四','周五','周六'][new Date().getDay()];
+  document.getElementById('view').innerHTML = VIEWS[cur]();
+  applyFilter();
+}
+
+/* ================= 视图：工作台 ================= */
+function VIEWS_dashboard(){
+  const inUse = DB.materials.filter(m=>m.status==='在用').length;
+  const total = DB.materials.length;
+  const pending = DB.changes.filter(c=> c.status==='影响评估' || c.status==='审批中');
+  const running = DB.projects.filter(p=>p.stage!=='量产').length;
+  const soon = DB.docs.filter(d=> d.status==='生效' && d.expire && daysTo(d.expire)>=0 && daysTo(d.expire)<=90);
+  const over = DB.docs.filter(d=> d.status==='生效' && d.expire && daysTo(d.expire)<0);
+
+  const statusCount = {};
+  DB.changes.forEach(c=> statusCount[c.status]=(statusCount[c.status]||0)+1);
+  const maxC = Math.max(1, ...Object.values(statusCount));
+  const colMap = {'草稿':'#c3d0ca','影响评估':'#e0a03a','审批中':'#2361c9','已批准':'#0d8f8f','实施中':'#6d4bc0','已关闭':'#16b877','已驳回':'#cf3b3b'};
+  const bars = ['草稿','影响评估','审批中','已批准','实施中','已关闭'].map(s=>{
+    const v = statusCount[s]||0;
+    return '<div class="bar-row"><div class="nm">'+s+'</div><div class="tr"><div class="fl" style="width:'+(v/maxC*100)+'%;background:'+(colMap[s]||'#ccc')+'"></div></div><div class="vl">'+v+'</div></div>';
+  }).join('');
+
+  const types = {}; DB.materials.forEach(m=> types[m.type]=(types[m.type]||0)+1);
+  const tColors = {'原料':'#0e8f5f','中间体':'#16b877','辅料':'#8fd0b4','包材':'#c9a227'};
+  const tItems = Object.keys(types).map(k=>({label:k, value:types[k], color:tColors[k]||'#b6c6bf'}));
+  const sumT = tItems.reduce((s,i)=>s+i.value,0)||1;
+  let acc=0;
+  const segs = tItems.map(i=>{ const from=acc/sumT*360; acc+=i.value; const to=acc/sumT*360; return i.color+' '+from+'deg '+to+'deg'; }).join(',');
+  const donut = '<div class="donut-wrap"><div class="dw"><div class="donut" style="background:conic-gradient('+segs+')"></div>'
+    + '<div class="dctr"><b>'+sumT+'</b><span>项物料</span></div></div>'
+    + '<div class="legend">'+tItems.map(i=>'<div class="li"><i class="sw" style="background:'+i.color+'"></i><span class="nn">'+i.label+'</span><span class="vv">'+i.value+'</span></div>').join('')+'</div></div>';
+
+  const todos = [];
+  DB.changes.filter(c=> c.status==='审批中').forEach(c=>{
+    const mine = (c.approvals||[]).filter(a=>a.state==='待审批').length;
+    todos.push({ic:'审',bg:'#e9f0fd',fg:'#1d4ed8',t:'待审批变更：'+c.title,m:c.code+' · '+mine+' 级待审 · 截止 '+c.due,go:'changes'});
+  });
+  DB.changes.filter(c=> c.status==='影响评估').forEach(c=>{
+    todos.push({ic:'评',bg:'#fdf2dd',fg:'#9a6206',t:'变更影响评估：'+c.title,m:c.code+' · 负责人 '+c.owner+' · 截止 '+c.due,go:'changes'});
+  });
+  soon.forEach(d=> todos.push({ic:'期',bg:'#fceaea',fg:'#b02a2a',t:'文件即将到期：'+d.title,m:d.code+' '+d.ver+' · 有效期至 '+d.expire,go:'docs'}));
+  over.forEach(d=> todos.push({ic:'期',bg:'#fceaea',fg:'#b02a2a',t:'文件已过期：'+d.title,m:d.code+' '+d.ver+' · 已于 '+d.expire+' 过期',go:'docs'}));
+  DB.projects.filter(p=>p.prog>=90 && p.stage!=='量产').forEach(p=> todos.push({ic:'项',bg:'#e6f6ee',fg:'#0a6f49',t:'项目待转量产：'+p.name,m:p.code+' · 当前 '+p.stage+' · 进度 '+p.prog+'%',go:'projects'}));
+
+  return '<div class="page"><div><h1>工作台</h1><p>'+DB.meta.org+' · '+DB.meta.dept+'　|　产品全生命周期概览与待办</p></div>'
+    + '<div class="row"><button class="btn" data-act="go-materials">物料台账</button><button class="btn primary" data-act="new-change">+ 发起变更</button></div></div>'
+    + '<div class="kpis">'
+    +   '<div class="kpi"><div class="lb">原辅料</div><div class="vl">'+total+'<small>项</small></div><div class="fo">'+(DB.libs||[]).length+' 个库 · 在用 <em>'+inUse+'</em></div></div>'
+    +   '<div class="kpi t"><div class="lb">配方</div><div class="vl">'+(DB.formulas||[]).length+'<small>个</small></div><div class="fo">已存档 <em>'+DB.formulas.filter(f=>f.status==='已存档').length+'</em> · 版本 '+(DB.formulas||[]).reduce((s,f)=>s+(f.archives||[]).length,0)+'</div></div>'
+    +   '<div class="kpi b"><div class="lb">在研项目</div><div class="vl">'+running+'<small>个</small></div><div class="fo">覆盖 '+new Set(DB.projects.map(p=>p.owner)).size+' 位负责人</div></div>'
+    +   '<div class="kpi a"><div class="lb">待处理变更</div><div class="vl">'+pending.length+'<small>单</small></div><div class="fo">累计变更 '+DB.changes.length+' 单</div></div>'
+    +   '<div class="kpi p"><div class="lb">文档有效期预警</div><div class="vl">'+(soon.length+over.length)+'<small>份</small></div><div class="fo">即将到期 <em>'+soon.length+'</em> · 已过期 '+over.length+'</div></div>'
+    + '</div>'
+    + '<div class="grid2">'
+    +   '<div class="card"><div class="card-h"><h3>变更流程分布</h3><span class="sub">按 ECR / ECN 当前状态统计</span></div><div class="card-b">'+bars+'</div></div>'
+    +   '<div class="card"><div class="card-h"><h3>物料构成</h3><span class="sub">共 '+total+' 项</span></div><div class="card-b">'+donut+'</div></div>'
+    + '</div>'
+    + '<div class="grid2b">'
+    +   '<div class="card"><div class="card-h"><h3>我的待办</h3><span class="sub">'+todos.length+' 项</span></div><div class="card-b">'
+    +     (todos.length? todos.slice(0,6).map(t=>'<div class="todo"><div class="ic" style="background:'+t.bg+';color:'+t.fg+'">'+t.ic+'</div>'
+         + '<div><div class="tt">'+esc(t.t)+'</div><div class="mm">'+esc(t.m)+'</div></div>'
+         + '<div class="go"><button class="btn sm" data-act="nav" data-k="'+t.go+'">处理</button></div></div>').join('')
+         : '<div class="empty">暂无待办，一切都在轨道上</div>')
+    +   '</div></div>'
+    +   '<div class="card"><div class="card-h"><h3>最近动态</h3><span class="sub">研发中心操作记录</span></div><div class="card-b"><div class="tl">'
+    +     DB.log.slice(0,7).map((l,i)=>'<div class="it '+(i===0?'hi':'')+'"><div class="tx"><b>'+esc(l.u)+'</b> '+esc(l.a)+'</div><div class="tm">'+esc(l.t)+'</div></div>').join('')
+    +   '</div></div></div>'
+    + '</div>';
+}
+function daysTo(d){ if(!d) return 9999; return Math.round((new Date(d+'T00:00:00') - new Date(todayStr()+'T00:00:00'))/86400000); }
+
+/* ================= 视图：原辅料系统（多库） ================= */
+function libOf(id){ return (DB.libs||[]).find(l=>l.id===id) || {id:'',name:'未分类',color:'#8b9d95',code:'—'}; }
+function money(n){ n=Number(n)||0; return '¥'+n.toLocaleString('zh-CN',{maximumFractionDigits:2}); }
+function num(n,d){ return (Number(n)||0).toFixed(d==null?2:d); }
+function usedByFormulas(id){ return (DB.formulas||[]).filter(f=>(f.items||[]).some(i=>i.ing===id)); }
+function libCount(id){ return DB.materials.filter(m=>m.libId===id).length; }
+
+function VIEWS_materials(){
+  const libId = ui.libId||'';
+  const list = libId? DB.materials.filter(m=>m.libId===libId) : DB.materials;
+  const tabs = '<div class="lt '+(libId===''?'on':'')+'" data-act="pick-lib" data-id="">全部原料<span class="n">'+DB.materials.length+'</span></div>'
+    + (DB.libs||[]).map(l=>'<div class="lt '+(libId===l.id?'on':'')+'" data-act="pick-lib" data-id="'+l.id+'">'
+      + '<i class="sq" style="background:'+l.color+'"></i>'+esc(l.name)+'<span class="n">'+libCount(l.id)+'</span></div>').join('');
+
+  const rows = list.map(m=>{
+    const sups = DB.suppliers.find(s=>s.id===m.sup);
+    const l = libOf(m.libId);
+    const act = (m.acts||[])[0];
+    const reg = (m.regs||[])[0];
+    const used = usedByFormulas(m.id).length;
+    return '<tr data-row data-s="'+esc((m.code+' '+m.name+' '+m.spec+' '+m.type+' '+l.name).toLowerCase())+'" data-type="'+esc(m.type)+'" data-lib="'+esc(m.libId)+'">'
+      + '<td class="code">'+esc(m.code)+'</td>'
+      + '<td><div class="nm">'+esc(m.name)+'</div><div class="sub2">'+esc(m.spec)+'</div></td>'
+      + '<td><span class="badge" style="background:'+l.color+'18;color:'+l.color+'">'+esc(l.name.replace('库',''))+'</span></td>'
+      + '<td class="num" style="white-space:nowrap">'+money(m.price)+'<span class="sub2">/'+esc(m.unit)+'</span>'
+        + (m.made? ' <span class="badge t-teal" style="font-size:10px">自制</span>':'')+'</td>'
+      + '<td class="sub2">'+(act? esc(act[0])+' <b style="color:var(--ink2);font-weight:600">'+esc(act[1])+'</b>' : '—')+'</td>'
+      + '<td>'+(reg? '<span class="badge t-gray">'+esc(reg[0])+'</span>'+(m.regs.length>1?' <span class="sub2">+'+(m.regs.length-1)+'</span>':'') : '—')+'</td>'
+      + '<td class="num">'+(used? used+' 个配方' : '<span class="sub2">—</span>')+'</td>'
+      + '<td><span class="badge '+toneOf(m.status)+'">'+esc(m.status)+'</span></td>'
+      + '<td><div class="acts"><button class="btn sm primary" data-act="profile" data-id="'+m.id+'">档案</button>'
+      + '<button class="btn sm" data-act="edit-mat" data-id="'+m.id+'">编辑</button>'
+      + '<button class="btn sm danger" data-act="del-mat" data-id="'+m.id+'">删除</button></div></td></tr>';
+  }).join('');
+
+  return '<div class="page"><div><h1>原辅料系统</h1><p>5 个原辅料库统一管理 · 价格 · 功效成分 · 营养成分表 · 法规使用依据（点击「档案」查看完整资料）</p></div>'
+    + '<div class="row"><button class="btn" data-act="exp-mat">导出 CSV</button><button class="btn" data-act="imp-mat">批量导入</button><button class="btn primary" data-act="new-mat">+ 新建原辅料</button></div></div>'
+    + '<div class="card">'
+    + '<div class="libtabs">'+tabs+'</div>'
+    + '<div class="tools">'
+    + '<div class="srch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>'
+    + '<input data-filter="mQ" value="'+esc(ui.mQ)+'" placeholder="搜索名称 / 编码 / 规格 / 功效成分"></div>'
+    + '<select class="sel" data-filter="mType"><option value="">全部类型</option>'
+    +   ['原料','中间体','辅料','包材'].map(t=>'<option '+(ui.mType===t?'selected':'')+'>'+t+'</option>').join('')+'</select>'
+    + '<div class="spacer"></div><span style="color:var(--muted);font-size:12px" id="mcount">共 '+list.length+' 项</span></div>'
+    + '<div class="tb-wrap"><table id="tbm"><thead><tr><th>编码</th><th>名称 / 规格</th><th>所属库</th><th style="text-align:right">单价</th>'
+    + '<th>关键功效成分</th><th>法规依据</th><th style="text-align:right">被引用</th><th>状态</th><th style="text-align:right">操作</th></tr></thead>'
+    + '<tbody>'+rows+'</tbody></table></div></div>';
+}
+
+/* 原辅料档案 */
+function openProfile(m){
+  const l = libOf(m.libId);
+  const sups = DB.suppliers.find(s=>s.id===m.sup);
+  const nutKeys = [['e','能量','kJ'],['p','蛋白质','g'],['f','脂肪','g'],['c','碳水化合物','g'],['s','糖','g'],['fib','膳食纤维','g'],['na','钠','mg']];
+  const nutriHtml = m.nut
+    ? '<div class="nutri">'+nutKeys.map(k=>'<div class="ni"><span>'+k[1]+'</span><b>'+(m.nut[k[0]]==null?'—':m.nut[k[0]])+'<i>'+k[2]+'</i></b></div>').join('')+'</div>'
+      + '<div style="font-size:11.5px;color:var(--muted);margin-top:7px">以上为每 100g 计，数据来源：供应商 COA / 企业内部检测汇总，仅用于配方营养标示测算。</div>'
+    : '<div class="note">该物料为包装材料，不适用营养成分表。</div>';
+
+  const acts = (m.acts&&m.acts.length)
+    ? '<table class="tbl2"><thead><tr><th>功效 / 质量指标</th><th>含量规格</th><th>检测方法</th></tr></thead><tbody>'
+      + m.acts.map(a=>'<tr><td><b>'+esc(a[0])+'</b></td><td>'+esc(a[1])+'</td><td class="sub2">'+esc(a[2]||'—')+'</td></tr>').join('')
+      + '</tbody></table>'
+    : '<div class="note">尚未录入功效成分指标。</div>';
+
+  const regs = (m.regs&&m.regs.length)
+    ? m.regs.map(r=>'<div class="law"><div class="t"><span class="badge '+(r[0]==='新食品原料'?'t-green':(r[0]==='合规提示'?'t-red':'t-blue'))+'">'+esc(r[0])+'</span></div>'
+      + '<div class="c"><b>'+esc(r[1])+'</b><span>适用范围：'+esc(r[2]||'—')+'</span></div>'
+      + '<div class="lim">'+esc(r[3]||'—')+'</div></div>').join('')
+    : '<div class="note">尚未录入法规依据，请补充后再用于境内产品。</div>';
+
+  const used = usedByFormulas(m.id);
+  const usedHtml = used.length
+    ? used.map(f=>'<div class="kv"><span>'+esc(f.code)+' · '+esc(f.name)+'</span><b style="font-size:12px">'
+      + num((f.items.find(i=>i.ing===m.id)||{}).qty,2)+' '+esc(m.unit)+' / '+esc(f.batch)+'kg 批</b></div>').join('')
+    : '<div class="note">暂无配方引用该物料。</div>';
+
+  openModal({title:'原辅料档案 · '+m.code, size:'wide', onOk:null, body:
+    '<div class="pf-lead"><div class="ic">'+esc((l.name||'原')[0])+'</div>'
+    + '<div class="tx"><h4>'+esc(m.name)+'</h4><p>'+esc(m.spec)+'</p>'
+    +   '<div class="chips" style="margin-top:6px"><span class="c">'+esc(l.name)+'</span><span class="c">'+esc(m.type)+'</span>'
+    +   '<span class="c">'+esc(m.ver)+'</span><span class="c">供应商：'+esc(sups? sups.name : '自制 / 无')+'</span></div></div>'
+    + '<div class="pr"><b>'+money(m.price)+'</b><span>元 / '+esc(m.unit)+'　更新 '+esc(m.date)+'</span></div></div>'
+
+    + '<div class="sec-t">基本信息</div>'
+    + '<div class="dl"><div class="d"><span>物料编码</span><b>'+esc(m.code)+'</b></div>'
+    + '<div class="d"><span>基原 / 来源</span><b>'+esc(m.origin||'—')+'</b></div>'
+    + '<div class="d"><span>状态</span><b>'+esc(m.status)+'</b></div>'
+    + '<div class="d"><span>计量单位</span><b>'+esc(m.unit)+'</b></div>'
+    + '<div class="d"><span>执行标准</span><b>'+esc((m.regs&&m.regs[0])? m.regs[0][1].slice(0,22)+(m.regs[0][1].length>22?'…':'') : '—')+'</b></div>'
+    + '<div class="d"><span>被配方引用</span><b>'+used.length+' 个配方</b></div></div>'
+
+    + '<div class="sec-t">功效成分 / 质量指标</div>'+acts
+    + (m.fn&&m.fn.length? '<div class="fnlist" style="margin-top:9px">'+m.fn.map(f=>'<span class="f">'+esc(f)+'</span>').join('')+'</div>' : '')
+
+    + '<div class="sec-t">营养成分表（每 100g）</div>'+nutriHtml
+
+    + '<div class="sec-t">法规使用依据</div>'+regs
+
+    + '<div class="sec-t">被配方使用情况</div>'+usedHtml
+
+    + (m.note? '<div class="sec-t">备注</div><div class="note">'+esc(m.note)+'</div>' : '')
+    + '<div class="row" style="margin-top:16px;justify-content:flex-end">'
+    + '<button class="btn" data-act="edit-mat" data-id="'+m.id+'">编辑档案</button>'
+    + '<button class="btn" data-act="mat-to-formula" data-id="'+m.id+'">加入新配方</button></div>'});
+}
+
+/* ================= 视图：产品与 BOM ================= */
+function VIEWS_products(){
+  const rows = DB.products.map(p=>{
+    const c = bomCost(p.bom);
+    return '<tr data-row data-s="'+esc((p.code+' '+p.name+' '+p.form).toLowerCase())+'">'
+      + '<td class="code">'+esc(p.code)+'</td>'
+      + '<td><div class="nm">'+esc(p.name)+'</div><div class="sub2">'+esc(p.spec)+'</div></td>'
+      + '<td>'+esc(p.form)+'</td>'
+      + '<td><span class="badge '+toneOf(p.stage)+'">'+esc(p.stage)+'</span></td>'
+      + '<td class="sub2">'+esc(p.owner)+'</td>'
+      + '<td class="num">'+countNodes(p.bom)+'</td>'
+      + '<td class="num">¥'+c.toFixed(2)+'</td>'
+      + '<td class="sub2">'+esc(p.base)+'</td>'
+      + '<td><div class="acts"><button class="btn sm" data-act="view-bom" data-id="'+p.id+'">BOM</button>'
+      + '<button class="btn sm" data-act="edit-prod" data-id="'+p.id+'">编辑</button>'
+      + '<button class="btn sm danger" data-act="del-prod" data-id="'+p.id+'">删除</button></div></td></tr>';
+  }).join('');
+  return '<div class="page"><div><h1>产品与 BOM</h1><p>多阶物料清单、用量损耗与单位成本测算（成本随物料单价自动重算）</p></div>'
+    + '<div class="row"><button class="btn" data-act="exp-prod">导出 CSV</button><button class="btn primary" data-act="new-prod">+ 新建产品</button></div></div>'
+    + '<div class="card"><div class="tools"><div class="srch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>'
+    + '<input data-filter="pQ" value="'+esc(ui.pQ||'')+'" placeholder="搜索产品 / 编码"></div>'
+    + '<div class="spacer"></div><span style="color:var(--muted);font-size:12px">共 '+DB.products.length+' 个产品</span></div>'
+    + '<div class="tb-wrap"><table><thead><tr><th>产品编码</th><th>产品名称 / 规格</th><th>剂型</th><th>阶段</th><th>负责人</th>'
+    + '<th style="text-align:right">BOM 项数</th><th style="text-align:right">单位成本</th><th>基准</th><th style="text-align:right">操作</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+
+function renderBomTree(nodes, depth){
+  return nodes.map(n=>{
+    const m = mat(n.mid);
+    const hasChild = n.children && n.children.length;
+    const key = n.id;
+    const open = ui.treeOpen[key] !== false;
+    const uc = unitCost(n);
+    let html = '<div class="tnode">'
+      + '<div class="lbl" style="padding-left:'+(depth*18)+'px">'
+      +   '<span class="tgl '+(hasChild?'':'sp')+'" data-act="tgl" data-k="'+key+'">'+(hasChild?(open?'−':'+'):'•')+'</span>'
+      +   '<span class="nm">'+esc(m? m.name : '已删除物料')+'</span>'
+      +   '<span class="cd">'+esc(m? m.code : '')+'</span>'
+      + '</div>'
+      + '<div class="q">'+n.qty+' '+esc(n.unit||(m?m.unit:''))+'</div>'
+      + '<div class="pr">'+(hasChild? '折算 ¥'+uc.toFixed(2) : '¥'+uc.toFixed(2))+'</div>'
+      + '<div class="sm">¥'+lineCost(n).toFixed(2)+'</div>'
+      + '<div class="op"><button class="btn sm ghost" data-act="bom-add-child" data-p="'+key+'" title="添加子项">+</button>'
+      +   '<button class="btn sm ghost" data-act="bom-del" data-p="'+key+'">×</button></div>'
+      + '</div>';
+    if(hasChild && open) html += renderBomTree(n.children, depth+1);
+    return html;
+  }).join('');
+}
+function bomRowsHtml(p){
+  return '<div class="tnode head"><div class="lbl">物料 / 编码</div><div class="q">用量</div><div class="pr">单价 / 折算</div><div class="sm">小计</div><div class="op"></div></div>'
+    + (p.bom.length? renderBomTree(p.bom,0) : '<div class="empty">暂无 BOM 行，点击右上「添加物料」</div>')
+    + '<div class="sum"><span>BOM 项数 <b>'+countNodes(p.bom)+'</b></span><span>'+esc(p.base||'')+' 成本 <b>¥'+bomCost(p.bom).toFixed(2)+'</b></span></div>';
+}
+function openBom(p){
+  viewOnlyModal(p.code+' · '+p.name,
+    '<div class="dl"><div class="d"><span>剂型</span><b>'+esc(p.form)+'</b></div>'
+    + '<div class="d"><span>规格</span><b>'+esc(p.spec)+'</b></div>'
+    + '<div class="d"><span>阶段</span><b>'+esc(p.stage)+'</b></div>'
+    + '<div class="d"><span>负责人</span><b>'+esc(p.owner)+'</b></div>'
+    + '<div class="d"><span>基准单位</span><b>'+esc(p.base||'—')+'</b></div>'
+    + '<div class="d"><span>更新时间</span><b>'+esc(p.date||'—')+'</b></div></div>'
+    + '<div class="sec-t">物料清单（BOM）</div>'
+    + '<div id="bomhost">'+bomRowsHtml(p)+'</div>'
+    + '<div class="row" style="margin-top:12px"><button class="btn sm" data-act="bom-add" data-id="'+p.id+'">+ 添加物料</button>'
+    + '<span style="color:var(--muted);font-size:11.5px">提示：子项用量按「生产 1 单位父项所需量」填写</span></div>',
+    'wide');
+}
+function refreshBom(p){ const h=document.getElementById('bomhost'); if(h) h.innerHTML = bomRowsHtml(p); }
+
+/* ================= 视图：配方系统 ================= */
+function ingPrice(id){ const m=mat(id); return m? (m.price||0) : 0; }
+function itemCost(it){ return (Number(it.qty)||0) * ingPrice(it.ing) * (1+(Number(it.loss)||0)/100); }
+function formulaCost(f){ return (f.items||[]).reduce((s,i)=> s+itemCost(i), 0); }
+function formulaOut(f){ return (Number(f.batch)||0) * (Number(f.yieldRate)||100)/100; }
+function formulaUnitCost(f){ const out=formulaOut(f); return out? formulaCost(f)/out : 0; }
+function formulaPerServing(f){ const s=Number(f.servings)||0; return s? formulaCost(f)/s : 0; }
+function formulaNutri(f, key){
+  const solids = (f.items||[]).filter(i=>{ const m=mat(i.ing); return m && m.nut && m.unit==='kg'; });
+  const totalKg = solids.reduce((s,i)=> s+(Number(i.qty)||0), 0);
+  if(!totalKg) return null;
+  let v=0, covered=0;
+  solids.forEach(i=>{
+    const m=mat(i.ing); const val = m.nut[key];
+    if(val==null) return;
+    v += (Number(i.qty)||0)/totalKg * Number(val);
+    covered++;
+  });
+  return covered? v : null;
+}
+
+function VIEWS_formulas(){
+  if(ui.formulaId) return formulaEditor(ui.formulaId);
+  const rows = (DB.formulas||[]).map(f=>{
+    const c = formulaCost(f), u = formulaUnitCost(f), p = formulaPerServing(f);
+    return '<tr data-row data-s="'+esc((f.code+' '+f.name+' '+f.owner).toLowerCase())+'" data-status="'+esc(f.status)+'">'
+      + '<td class="code">'+esc(f.code)+'</td>'
+      + '<td><div class="nm">'+esc(f.name)+'</div><div class="sub2">'+esc(f.items.length)+' 项原料 · '+esc(f.batch)+'kg 批量 · 成品率 '+esc(f.yieldRate)+'%</div></td>'
+      + '<td><span class="verchip">'+esc(f.ver)+'</span></td>'
+      + '<td><span class="badge '+toneOf(f.status)+'">'+esc(f.status)+'</span></td>'
+      + '<td class="num">'+num(formulaOut(f),1)+' kg</td>'
+      + '<td class="num"><b>'+money(c)+'</b></td>'
+      + '<td class="num">'+money(u)+'<span class="sub2">/kg</span></td>'
+      + '<td class="num">'+(p? money(p)+'<span class="sub2">/'+esc(f.servingUnit||'份')+'</span>' : '—')+'</td>'
+      + '<td class="sub2">'+esc(f.owner)+'</td>'
+      + '<td class="num">'+(f.archives||[]).length+'</td>'
+      + '<td><div class="acts"><button class="btn sm primary" data-act="open-formula" data-id="'+f.id+'">编辑配方</button>'
+      + '<button class="btn sm danger" data-act="del-formula" data-id="'+f.id+'">删除</button></div></td></tr>';
+  }).join('');
+
+  const totalCost = (DB.formulas||[]).reduce((s,f)=>s+formulaCost(f),0);
+  const archived = (DB.formulas||[]).filter(f=>f.status==='已存档').length;
+  return '<div class="page"><div><h1>配方系统</h1><p>原辅料用量（kg）→ 按单价折算成本 → 单位成本 / 每份成本 → 配方版本存档</p></div>'
+    + '<div class="row"><button class="btn" data-act="exp-formula">导出 CSV</button>'
+    + '<button class="btn primary" data-act="new-formula">+ 新建配方</button></div></div>'
+    + '<div class="kpis" style="grid-template-columns:repeat(4,1fr)">'
+    + '<div class="kpi"><div class="lb">配方总数</div><div class="vl">'+(DB.formulas||[]).length+'<small>个</small></div><div class="fo">已存档 <em>'+archived+'</em> · 草稿 '+(DB.formulas.length-archived)+'</div></div>'
+    + '<div class="kpi b"><div class="lb">批次原料成本合计</div><div class="vl" style="font-size:21px">'+money(totalCost)+'</div><div class="fo">按当前原辅料单价折算</div></div>'
+    + '<div class="kpi a"><div class="lb">关联产品</div><div class="vl">'+(DB.formulas||[]).filter(f=>f.product).length+'<small>个</small></div><div class="fo">已绑定产品编码的配方</div></div>'
+    + '<div class="kpi p"><div class="lb">存档版本</div><div class="vl">'+(DB.formulas||[]).reduce((s,f)=>s+(f.archives||[]).length,0)+'<small>份</small></div><div class="fo">可追溯历史配方表</div></div></div>'
+    + '<div class="card"><div class="tools"><div class="srch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>'
+    + '<input data-filter="fQ" value="'+esc(ui.fQ||'')+'" placeholder="搜索配方 / 编号 / 负责人"></div>'
+    + '<select class="sel" data-filter="fStatus"><option value="">全部状态</option>'
+    + ['草稿','已存档','已作废'].map(s=>'<option '+(ui.fStatus===s?'selected':'')+'>'+s+'</option>').join('')+'</select>'
+    + '<div class="spacer"></div><span style="color:var(--muted);font-size:12px">共 '+(DB.formulas||[]).length+' 个配方</span></div>'
+    + '<div class="tb-wrap"><table><thead><tr><th>配方编号</th><th>配方名称 / 组成</th><th>版本</th><th>状态</th><th style="text-align:right">产出</th>'
+    + '<th style="text-align:right">原料成本</th><th style="text-align:right">单位成本</th><th style="text-align:right">每份成本</th><th>负责人</th><th style="text-align:right">存档</th><th style="text-align:right">操作</th></tr></thead>'
+    + '<tbody>'+rows+'</tbody></table></div></div>';
+}
+
+function formulaEditor(id){
+  const f = DB.formulas.find(x=>x.id===id);
+  if(!f){ ui.formulaId=null; return VIEWS_formulas(); }
+  if(!ui.editing || ui.editing.id!==id) ui.editing = JSON.parse(JSON.stringify(f));
+  const e = ui.editing;
+  const total = e.items.reduce((s,i)=> s+itemCost(i), 0);
+  const out = formulaOut(e);
+
+  const ingOptions = (DB.libs||[]).map(l=>{
+    const opts = DB.materials.filter(m=>m.libId===l.id)
+      .map(m=>'<option value="'+m.id+'" '+(m.id===0?'':'')+'>'+esc(m.code+' · '+m.name)+'</option>').join('');
+    return opts? '<optgroup label="'+esc(l.name)+'">'+opts+'</optgroup>' : '';
+  }).join('');
+
+  const rows = e.items.map((it,i)=>{
+    const m = mat(it.ing) || {};
+    const cost = itemCost(it);
+    const pct = total? cost/total*100 : 0;
+    return '<tr data-fxrow="'+i+'">'
+      + '<td class="sub2" style="width:34px">'+(i+1)+'</td>'
+      + '<td style="min-width:260px"><select data-fx="ing" data-i="'+i+'">'
+      +   '<option value="">— 选择原辅料 —</option>'
+      +   (DB.libs||[]).map(l=>{
+            const opts = DB.materials.filter(mm=>mm.libId===l.id).map(mm=>
+              '<option value="'+mm.id+'" '+(mm.id===it.ing?'selected':'')+'>'+esc(mm.code+' · '+mm.name)+'</option>').join('');
+            return opts? '<optgroup label="'+esc(l.name)+'">'+opts+'</optgroup>' : '';
+          }).join('')
+      + '</select></td>'
+      + '<td class="sub2" data-cell="lib" style="width:90px">'+esc(libOf(m.libId).name.replace('库',''))+'</td>'
+      + '<td style="width:96px"><input type="number" step="0.001" min="0" data-fx="qty" data-i="'+i+'" value="'+it.qty+'"></td>'
+      + '<td class="sub2" data-cell="unit" style="width:46px">'+esc(m.unit||'')+'</td>'
+      + '<td style="width:76px"><input type="number" step="0.1" min="0" data-fx="loss" data-i="'+i+'" value="'+(it.loss||0)+'"></td>'
+      + '<td class="n" data-cell="price" style="width:92px">'+money(m.price)+'</td>'
+      + '<td class="n" data-cell="cost" style="width:100px"><b>'+money(cost)+'</b></td>'
+      + '<td class="n" style="width:104px"><span class="pct"><i data-cell="pctbar" style="width:'+pct.toFixed(1)+'%"></i></span>'
+      +   '<span data-cell="pct">'+pct.toFixed(1)+'%</span></td>'
+      + '<td style="width:36px"><button class="btn sm ghost" data-act="fx-del" data-i="'+i+'" title="删除">×</button></td></tr>';
+  }).join('');
+
+  const nutriRow = [['e','能量','kJ'],['p','蛋白质','g'],['f','脂肪','g'],['c','碳水化合物','g'],['s','糖','g'],['fib','膳食纤维','g'],['na','钠','mg']];
+  const nutCells = nutriRow.map(k=>{
+    const v = formulaNutri(e,k[0]);
+    return '<div class="ni"><span>'+k[1]+'</span><b>'+(v==null?'—':(v>=100? v.toFixed(0) : v.toFixed(2)))+'<i>'+k[2]+'/100g</i></b></div>';
+  }).join('');
+
+  const archList = (f.archives||[]).length
+    ? f.archives.slice().reverse().map(a=>'<div class="arch-row"><span class="v">'+esc(a.ver)+'</span><span class="d">'+esc(a.date)+'</span>'
+        + '<span class="c">原料成本 <b>'+money(a.cost)+'</b> · 单位成本 <b>'+money(a.unit)+'/kg</b> · 每份 <b>'+money(a.per)+'</b>'
+        + (a.cost!==total? ' <span class="badge '+(a.cost>total?'t-green':'t-red')+'">'+(a.cost>total?'降本 ':'增本 ')+Math.abs((1-a.cost/total)*100).toFixed(1)+'%</span>':'')+'</span>'
+        + '<button class="btn sm" data-act="view-arch" data-id="'+f.id+'" data-ver="'+esc(a.ver)+'">查看配方表</button></div>').join('')
+    : '<div class="note">尚无存档版本。点击右上「存档新版本」可锁定当前配方表。</div>';
+
+  return '<div class="page"><div>'
+    + '<div class="row" style="margin-bottom:6px"><button class="btn sm ghost" data-act="fx-back">← 返回配方列表</button>'
+    + '<span class="verchip">'+esc(e.ver)+'</span><span class="badge '+toneOf(e.status)+'">'+esc(e.status)+'</span></div>'
+    + '<h1>'+esc(e.name)+'</h1><p>'+esc(e.code)+'　|　批量 '+esc(e.batch)+'kg　成品率 '+esc(e.yieldRate)+'%　产出 '+num(out,1)+'kg　每 '+esc(e.servingUnit||'份')+' 对应 '+esc(e.servings)+' 份</p></div>'
+    + '<div class="row"><button class="btn" data-act="exp-formula-one" data-id="'+f.id+'">导出配方表</button>'
+    + '<button class="btn" data-act="fx-edit-info" data-id="'+f.id+'">基本信息</button>'
+    + '<button class="btn" data-act="fx-save" data-id="'+f.id+'">保存</button>'
+    + '<button class="btn primary" data-act="fx-archive" data-id="'+f.id+'">存档新版本</button></div></div>'
+
+    + '<div class="card"><div class="card-h"><h3>配方组成</h3><span class="sub">用量单位按原辅料计量单位，成本 = 用量 × 单价 ×（1 + 损耗率）</span></div>'
+    + '<div style="padding:4px 10px 12px"><table class="ftable" id="fxtb"><thead><tr>'
+    + '<th></th><th>原辅料</th><th>所属库</th><th>用量</th><th>单位</th><th>损耗%</th><th style="text-align:right">单价</th>'
+    + '<th style="text-align:right">成本</th><th style="text-align:right">占比</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>'
+    + '<div class="row" style="margin-top:10px"><button class="btn sm" data-act="fx-add">+ 添加原辅料</button>'
+    + '<span style="font-size:11.5px;color:var(--muted)">修改用量或损耗后，成本与占比即时重算</span></div>'
+    + '<div class="fx-sum">'
+    +   '<div class="s"><span>原料成本合计</span><b data-sum="cost">'+money(total)+'</b></div>'
+    +   '<div class="s"><span>成品产量</span><b data-sum="out">'+num(out,1)+'<em>kg</em></b></div>'
+    +   '<div class="s"><span>单位成本</span><b data-sum="unit">'+money(total/(out||1))+'<em>/kg</em></b></div>'
+    +   '<div class="s hl"><span>每'+(e.servingUnit||'份')+'成本</span><b data-sum="per">'+(e.servings? money(total/e.servings):'—')+'<em>/'+esc(e.servingUnit||'份')+'</em></b></div>'
+    + '</div></div></div>'
+
+    + '<div class="grid2b" style="margin-top:14px">'
+    + '<div class="card"><div class="card-h"><h3>营养折算（每 100g）</h3><span class="sub">按原辅料营养成分表加权</span></div>'
+    +   '<div class="card-b"><div class="nutri">'+nutCells+'</div>'
+    +   '<div style="font-size:11.5px;color:var(--muted);margin-top:8px">仅统计计量单位为 kg 的原辅料；包材不计入。可用于校验营养成分表标示值。</div></div></div>'
+    + '<div class="card"><div class="card-h"><h3>版本存档</h3><span class="sub">已存 '+(f.archives||[]).length+' 个版本</span></div>'
+    +   '<div class="card-b">'+archList+'</div></div></div>';
+}
+
+/* 配方编辑：局部重算 */
+function fxRecount(){
+  const e = ui.editing; if(!e) return;
+  const total = e.items.reduce((s,i)=> s+itemCost(i), 0);
+  e.items.forEach((it,i)=>{
+    const tr = document.querySelector('[data-fxrow="'+i+'"]'); if(!tr) return;
+    const m = mat(it.ing) || {};
+    const c = itemCost(it), pct = total? c/total*100 : 0;
+    const set=(sel,v)=>{ const el=tr.querySelector('[data-cell="'+sel+'"]'); if(el) el.innerHTML=v; };
+    set('lib', esc(libOf(m.libId).name.replace('库','')));
+    set('unit', esc(m.unit||''));
+    set('price', money(m.price));
+    set('cost', '<b>'+money(c)+'</b>');
+    set('pct', pct.toFixed(1)+'%');
+    const bar = tr.querySelector('[data-cell="pctbar"]'); if(bar) bar.style.width = pct.toFixed(1)+'%';
+  });
+  const out = formulaOut(e);
+  const map = {cost: money(total), out: num(out,1)+'<em>kg</em>', unit: money(total/(out||1))+'<em>/kg</em>',
+    per: (e.servings? money(total/e.servings):'—')+'<em>/'+esc(e.servingUnit||'份')+'</em>'};
+  Object.keys(map).forEach(k=>{ const el=document.querySelector('[data-sum="'+k+'"]'); if(el) el.innerHTML = map[k]; });
+}
+/* ================= 视图：变更 ================= */
+function VIEWS_changes(){
+  const rows = DB.changes.map(c=>{
+    const ap = c.approvals||[];
+    const done = ap.filter(a=>a.state==='已通过').length;
+    return '<tr data-row data-s="'+esc((c.code+' '+c.title+' '+c.type+' '+c.initiator).toLowerCase())+'" data-status="'+esc(c.status)+'">'
+      + '<td class="code">'+esc(c.code)+'</td>'
+      + '<td><div class="nm">'+esc(c.title)+'</div><div class="sub2">'+esc(c.type)+' · 发起 '+esc(c.initiator)+' · 影响 '+c.affected.length+' 项物料</div></td>'
+      + '<td><span class="badge '+toneOf(c.pri)+'">'+esc(c.pri)+'</span></td>'
+      + '<td><span class="badge '+toneOf(c.status)+'">'+esc(c.status)+'</span></td>'
+      + '<td class="sub2">'+(ap.length? done+'/'+ap.length : '—')+'</td>'
+      + '<td class="sub2">'+esc(c.due)+'</td>'
+      + '<td><div class="acts"><button class="btn sm" data-act="view-chg" data-id="'+c.id+'">详情</button>'
+      + '<button class="btn sm danger" data-act="del-chg" data-id="'+c.id+'">删除</button></div></td></tr>';
+  }).join('');
+  const counts = {};
+  ['草稿','影响评估','审批中','已批准','实施中','已关闭'].forEach(s=> counts[s]=DB.changes.filter(c=>c.status===s).length);
+  const strip = ['草稿','影响评估','审批中','已批准','实施中','已关闭'].map(s=>'<span class="badge '+toneOf(s)+'">'+s+' '+counts[s]+'</span>').join('');
+  return '<div class="page"><div><h1>变更管理</h1><p>ECR / ECN 全流程：申请 → 影响评估 → 多级审批 → 实施 → 关闭</p></div>'
+    + '<div class="row"><button class="btn" data-act="exp-chg">导出 CSV</button><button class="btn primary" data-act="new-change">+ 发起变更</button></div></div>'
+    + '<div class="card"><div class="tools">'
+    + '<div class="srch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>'
+    + '<input data-filter="cQ" value="'+esc(ui.cQ)+'" placeholder="搜索变更单 / 标题"></div>'
+    + '<select class="sel" data-filter="cStatus"><option value="">全部状态</option>'
+    + ['草稿','影响评估','审批中','已批准','实施中','已关闭'].map(s=>'<option '+(ui.cStatus===s?'selected':'')+'>'+s+'</option>').join('')+'</select>'
+    + '<div class="spacer"></div><div class="chips">'+strip+'</div></div>'
+    + '<div class="tb-wrap"><table><thead><tr><th>变更单号</th><th>标题</th><th>优先级</th><th>状态</th><th>审批进度</th><th>目标日期</th><th style="text-align:right">操作</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+function openChange(c){
+  const idx = FLOW.indexOf(c.status);
+  const steps = FLOW.map((s,i)=>{
+    let cls = i<idx? 'done' : (i===idx? 'cur':'');
+    if(c.status==='已驳回') cls = s==='草稿'?'done':'';
+    return '<div class="step '+cls+'"><div class="cr">'+(i<idx?'✓':i+1)+'</div>'+s+'</div>'+(i<FLOW.length-1?'<div class="ln"></div>':'');
+  }).join('');
+  const apv = (c.approvals||[]).map((a,i)=>{
+    const tone = a.state==='已通过'?'t-green':(a.state==='已驳回'?'t-red':'t-gray');
+    const btn = (c.status==='审批中' && a.state==='待审批')
+      ? '<button class="btn sm" data-act="apv-ok" data-id="'+c.id+'" data-i="'+i+'">通过</button>'
+        + '<button class="btn sm danger" data-act="apv-no" data-id="'+c.id+'" data-i="'+i+'">驳回</button>' : '';
+    return '<div class="apv '+(a.state==='待审批'?'pend':'')+'"><div class="rl">'+esc(a.role)+'</div>'
+      + '<div class="us">'+esc(a.user)+(a.cmt?'<div class="sub2" style="font-size:11.5px;color:var(--muted)">'+esc(a.cmt)+'</div>':'')+'</div>'
+      + '<span class="dt">'+esc(a.date||'')+'</span><span class="badge '+tone+'">'+esc(a.state)+'</span>'
+      + '<span class="acts">'+btn+'</span></div>';
+  }).join('') || '<div class="empty" style="padding:16px">尚未提交评审</div>';
+
+  const aff = c.affected.map(id=>{
+    const m = mat(id); const p = DB.products.find(x=>x.id===id);
+    const nm = m? m.name : (p? p.name : id);
+    const cd = m? m.code : (p? p.code : id);
+    return '<span class="c" title="'+esc(cd)+'">'+esc(nm)+'</span>';
+  }).join('');
+
+  const nextBtn = (()=>{
+    const map = {'草稿':['提交影响评估','影响评估'],'影响评估':['提交评审','审批中'],'已批准':['开始实施','实施中'],'实施中':['完成并关闭','已关闭']};
+    if(c.status==='审批中'){
+      const allDone = (c.approvals||[]).every(a=>a.state!=='待审批');
+      return allDone? '<button class="btn primary" data-act="chg-next" data-id="'+c.id+'">全部通过 → 批准</button>' : '';
+    }
+    const n = map[c.status];
+    return n? '<button class="btn primary" data-act="chg-next" data-id="'+c.id+'">'+n[0]+'</button>' : '';
+  })();
+
+  viewOnlyModal(c.code+' · 变更详情',
+    '<div class="steps">'+steps+'</div>'
+    + '<div class="dl"><div class="d"><span>变更类型</span><b>'+esc(c.type)+'</b></div>'
+    + '<div class="d"><span>优先级</span><b>'+esc(c.pri)+'</b></div>'
+    + '<div class="d"><span>状态</span><b>'+esc(c.status)+'</b></div>'
+    + '<div class="d"><span>发起人 / 负责人</span><b>'+esc(c.initiator)+' / '+esc(c.owner)+'</b></div>'
+    + '<div class="d"><span>创建日期</span><b>'+esc(c.created)+'</b></div>'
+    + '<div class="d"><span>目标完成</span><b>'+esc(c.due)+'</b></div></div>'
+    + '<div class="sec-t">变更说明</div><div class="note">'+esc(c.desc||'—')+'</div>'
+    + '<div class="sec-t">受影响物料 / 产品</div><div class="chips">'+(aff||'<span class="sub2">未指定</span>')+'</div>'
+    + '<div class="sec-t">审批流程</div>'+apv
+    + '<div class="sec-t">变更记录</div><div class="tl">'+(c.history||[]).slice().reverse().map(h=>'<div class="it"><div class="tx"><b>'+esc(h.u)+'</b> '+esc(h.a)+'</div><div class="tm">'+esc(h.t)+'</div></div>').join('')+'</div>'
+    + '<div class="row" style="margin-top:16px;justify-content:flex-end">'+nextBtn
+    + (c.status!=='已关闭'? '<button class="btn danger" data-act="chg-reject" data-id="'+c.id+'">驳回</button>':'')+'</div>',
+    'wide');
+}
+
+/* ================= 视图：项目 ================= */
+function VIEWS_projects(){
+  const cards = DB.projects.map(p=>{
+    const stg = toneOf(p.stage);
+    return '<div class="pc" data-act="view-prj" data-id="'+p.id+'">'
+      + '<div class="hd"><div><div class="cd">'+esc(p.code)+'</div><h4>'+esc(p.name)+'</h4></div></div>'
+      + '<div class="mt"><span>'+esc(p.owner)+' · '+esc(p.start)+' → '+esc(p.end)+'</span><span>'+p.prog+'%</span></div>'
+      + '<div class="pb"><i style="width:'+p.prog+'%"></i></div>'
+      + '<div class="ft"><span class="badge '+stg+'">'+esc(p.stage)+'</span><span>里程碑 '+p.ms.length+' 项</span></div></div>';
+  }).join('');
+  const dist = STAGES.map(s=>{
+    const n = DB.projects.filter(p=>p.stage===s).length;
+    return '<div class="bar-row"><div class="nm">'+s+'</div><div class="tr"><div class="fl" style="width:'+(n/Math.max(1,DB.projects.length)*100)+'%;background:#16b877"></div></div><div class="vl">'+n+'</div></div>';
+  }).join('');
+  return '<div class="page"><div><h1>研发项目</h1><p>阶段门（Stage-Gate）管理：概念 → 小试 → 中试 → 稳定性 → 注册申报 → 量产导入</p></div>'
+    + '<div class="row"><button class="btn primary" data-act="new-prj">+ 新建项目</button></div></div>'
+    + '<div class="grid2" style="margin-bottom:14px">'
+    + '<div class="card"><div class="card-h"><h3>项目阶段分布</h3><span class="sub">共 '+DB.projects.length+' 个项目</span></div><div class="card-b">'+dist+'</div></div>'
+    + '<div class="card"><div class="card-h"><h3>资源概览</h3><span class="sub">按负责人</span></div><div class="card-b">'
+    + Object.entries(DB.projects.reduce((a,p)=>{ a[p.owner]=(a[p.owner]||0)+1; return a;},{})).map(([k,v])=>
+        '<div class="kv"><span>'+esc(k)+'</span><b>'+v+' 个项目</b></div>').join('')
+    + '</div></div></div>'
+    + '<div class="pgrid">'+cards+'</div>';
+}
+
+/* ================= 视图：文档 ================= */
+function VIEWS_docs(){
+  const rows = DB.docs.map(d=>{
+    const dd = daysTo(d.expire);
+    const warn = d.expire && d.status==='生效' && dd<=90;
+    return '<tr data-row data-s="'+esc((d.code+' '+d.title+' '+d.type+' '+d.owner).toLowerCase())+'" data-type="'+esc(d.type)+'">'
+      + '<td class="code">'+esc(d.code)+'</td>'
+      + '<td><div class="nm">'+esc(d.title)+'</div><div class="sub2">关联：'+esc(d.link? (mat(d.link)||DB.products.find(p=>p.id===d.link)||{}).name || '—' : '通用')+'</div></td>'
+      + '<td><span class="badge t-gray">'+esc(d.type)+'</span></td>'
+      + '<td class="code">'+esc(d.ver)+'</td>'
+      + '<td><span class="badge '+toneOf(d.status)+'">'+esc(d.status)+'</span></td>'
+      + '<td class="sub2">'+esc(d.owner)+'</td>'
+      + '<td class="sub2">'+esc(d.date)+'</td>'
+      + '<td class="sub2">'+(d.expire? esc(d.expire)+(dd<0? ' <span class="badge t-red">已过期</span>' : (warn? ' <span class="badge t-red">'+dd+'天</span>':'')) : '长期')+'</td>'
+      + '<td><div class="acts"><button class="btn sm" data-act="edit-doc" data-id="'+d.id+'">编辑</button>'
+      + '<button class="btn sm danger" data-act="del-doc" data-id="'+d.id+'">删除</button></div></td></tr>';
+  }).join('');
+  return '<div class="page"><div><h1>文档与合规</h1><p>SOP、规格书、COA、稳定性报告与法规申报材料的版本控制与有效期跟踪</p></div>'
+    + '<div class="row"><button class="btn" data-act="exp-doc">导出 CSV</button><button class="btn primary" data-act="new-doc">+ 上传文档</button></div></div>'
+    + '<div class="card"><div class="tools"><div class="srch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>'
+    + '<input data-filter="dQ" value="'+esc(ui.dQ)+'" placeholder="搜索文档名称 / 编号"></div>'
+    + '<select class="sel" data-filter="dType"><option value="">全部类型</option>'
+    + ['SOP','规格书','COA','研究报告','法规文件','标签稿件'].map(t=>'<option '+(ui.dType===t?'selected':'')+'>'+t+'</option>').join('')+'</select>'
+    + '<div class="spacer"></div><span style="color:var(--muted);font-size:12px">共 '+DB.docs.length+' 份</span></div>'
+    + '<div class="tb-wrap"><table><thead><tr><th>文档编号</th><th>标题 / 关联对象</th><th>类型</th><th>版本</th><th>状态</th><th>责任人</th><th>发布日期</th><th>有效期至</th><th style="text-align:right">操作</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+
+/* ================= 视图：供应商 ================= */
+function VIEWS_suppliers(){
+  const rows = DB.suppliers.map(s=>{
+    const used = DB.materials.filter(m=>m.sup===s.id).length;
+    return '<tr data-row data-s="'+esc((s.name+' '+s.region+' '+s.cat+' '+s.code).toLowerCase())+'">'
+      + '<td class="code">'+esc(s.code)+'</td>'
+      + '<td><div class="nm">'+esc(s.name)+'</div><div class="sub2">'+esc(s.contact)+'</div></td>'
+      + '<td>'+esc(s.region)+'</td><td class="sub2">'+esc(s.cat)+'</td>'
+      + '<td><div class="chips">'+s.certs.map(c=>'<span class="c">'+esc(c)+'</span>').join('')+'</div></td>'
+      + '<td><span class="badge '+toneOf(s.status)+'">'+esc(s.status)+'</span></td>'
+      + '<td class="num">'+used+'</td><td class="sub2">'+esc(s.since)+'</td>'
+      + '<td><div class="acts"><button class="btn sm" data-act="edit-sup" data-id="'+s.id+'">编辑</button>'
+      + '<button class="btn sm danger" data-act="del-sup" data-id="'+s.id+'">删除</button></div></td></tr>';
+  }).join('');
+  return '<div class="page"><div><h1>供应商</h1><p>原料 / 辅料 / 包材供应商准入、资质证照与物料绑定关系</p></div>'
+    + '<div class="row"><button class="btn primary" data-act="new-sup">+ 新增供应商</button></div></div>'
+    + '<div class="card"><div class="tools"><div class="srch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>'
+    + '<input data-filter="sQ" value="'+esc(ui.sQ)+'" placeholder="搜索供应商 / 地区"></div>'
+    + '<div class="spacer"></div><span style="color:var(--muted);font-size:12px">共 '+DB.suppliers.length+' 家 · 合格 '+DB.suppliers.filter(s=>s.status==='合格').length+' 家</span></div>'
+    + '<div class="tb-wrap"><table><thead><tr><th>编码</th><th>供应商名称 / 联系人</th><th>地区</th><th>供应类别</th><th>资质证照</th><th>准入状态</th><th style="text-align:right">供货物料</th><th>合作起始</th><th style="text-align:right">操作</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+
+/* ================= 视图：数据管理 ================= */
+function VIEWS_data(){
+  return '<div class="page"><div><h1>数据管理</h1><p>数据保存在服务端数据库（SQLite），所有修改实时同步给全部在线成员</p></div>'
+    + '<div class="row"><button class="btn" data-act="exp-json">导出全部数据</button>'
+    + '<button class="btn" data-act="imp-json">导入数据</button>'
+    + '<button class="btn danger" data-act="reset">重置为演示数据</button></div></div>'
+    + '<div class="grid2b">'
+    + '<div class="card"><div class="card-h"><h3>数据概览</h3></div><div class="card-b"><div class="mini">'
+    + '<div class="m"><b>'+DB.materials.length+'</b><span>物料</span></div>'
+    + '<div class="m"><b>'+DB.products.length+'</b><span>产品</span></div>'
+    + '<div class="m"><b>'+DB.changes.length+'</b><span>变更单</span></div>'
+    + '<div class="m"><b>'+DB.docs.length+'</b><span>文档</span></div>'
+    + '<div class="m"><b>'+DB.projects.length+'</b><span>项目</span></div>'
+    + '<div class="m"><b>'+DB.suppliers.length+'</b><span>供应商</span></div>'
+    + '<div class="m"><b>'+(DB.formulas||[]).length+'</b><span>配方</span></div>'
+    + '<div class="m"><b>'+DB.products.reduce((s,p)=>s+countNodes(p.bom),0)+'</b><span>BOM 行</span></div>'
+    + '<div class="m"><b>'+DB.log.length+'</b><span>操作记录</span></div>'
+    + '</div></div></div>'
+    + '<div class="card"><div class="card-h"><h3>使用说明</h3></div><div class="card-b">'
+    + '<div class="note"><b>操作路径：</b>物料主数据先建档 → 产品维护 BOM（成本自动折算）→ 变更走 ECR/ECN 审批流 → 文档与项目关联物料。<br><br>'
+    + '<b>数据安全：</b>数据存于服务端 SQLite 数据库（server/plm.db），请定期备份该文件；也可用「导出全部数据」导出 JSON 快照。<br><br>'
+    + '<b>协作说明：</b>页面每 15 秒自动同步其他成员的更新；并发保存采用版本号校验，冲突时会提示重新载入，不会互相覆盖。</div>'
+    + '</div></div></div>'
+    + '<div class="card" style="margin-top:14px"><div class="card-h"><h3>操作记录</h3></div><div class="card-b"><div class="tl">'
+    + DB.log.slice(0,16).map(l=>'<div class="it"><div class="tx"><b>'+esc(l.u)+'</b> '+esc(l.a)+'</div><div class="tm">'+esc(l.t)+'</div></div>').join('')
+    + '</div></div></div>';
+}
+
+/* ================= 表单：原辅料 ================= */
+function matForm(m){
+  m = m||{};
+  const n = m.nut||{};
+  const actsTxt = (m.acts||[]).map(a=>a.join(' | ')).join('\n');
+  const regsTxt = (m.regs||[]).map(a=>a.join(' | ')).join('\n');
+  const nk = [['e','能量 kJ'],['p','蛋白质 g'],['f','脂肪 g'],['c','碳水化合物 g'],['s','糖 g'],['fib','膳食纤维 g'],['na','钠 mg']];
+  return '<div class="fgrid">'
+    + fld('物料编码','code',m.code,{req:true,ph:'如 RM-1001'})
+    + fld('物料类型','type',m.type||'原料',{req:true,type:'select',options:['原料','中间体','辅料','包材']})
+    + fld('物料名称','name',m.name,{req:true,full:true,ph:'如 植物提取物 A（活性成分 A 13%）'})
+    + fld('所属原辅料库','libId',m.libId||'LIB1',{req:true,type:'select',options:(DB.libs||[]).map(l=>({v:l.id,t:l.name}))})
+    + fld('基原 / 来源','origin',m.origin,{full:true,ph:'如 十字花科 十字花科蔬菜 成熟种子'})
+    + fld('规格 / 质量指标','spec',m.spec,{full:true,ph:'如 活性成分 A≥13.0%，水分≤5.0%'})
+    + fld('计量单位','unit',m.unit||'kg',{req:true})
+    + fld('单价（元 / 单位）','price',m.price,{type:'number',step:'0.01',min:0,ph:'自制中间体填折算成本'})
+    + fld('主供应商','sup',m.sup||'',{type:'select',options:[{v:'',t:'（无 / 自制）'}].concat(DB.suppliers.map(s=>({v:s.id,t:s.name})))})
+    + fld('状态','status',m.status||'在用',{type:'select',options:['在用','试制','停用']})
+    + fld('版本','ver',m.ver||'V1.0')
+    + fld('更新日期','date',m.date||todayStr(),{type:'date'})
+    + fld('功效成分指标（每行：名称 | 含量 | 方法）','acts',actsTxt,{type:'textarea',full:true,ph:'总黄酮（以芦丁计） | ≥13.0% | HPLC'})
+    + fld('功效标签（逗号分隔）','fn',(m.fn||[]).join('，'),{full:true,ph:'抗氧化，清除自由基'})
+    + '<div class="fld full"><label>营养成分表（每 100g）</label>'
+    +   '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">'
+    +   nk.map(k=>'<input name="n_'+k[0]+'" type="number" step="0.01" min="0" value="'+(n[k[0]]==null?'':n[k[0]])+'" placeholder="'+k[1]+'" style="height:32px;border:1px solid var(--line);border-radius:7px;padding:0 9px;font-size:12.5px;font-family:inherit;outline:none">').join('')
+    +   '</div><span style="font-size:11px;color:var(--muted);margin-top:3px">按顺序：能量 kJ、蛋白质 g、脂肪 g、碳水化合物 g、糖 g、膳食纤维 g、钠 mg；包材可留空</span></div>'
+    + fld('法规使用依据（每行：类型 | 依据 | 适用范围 | 限量）','regs',regsTxt,{type:'textarea',full:true,ph:'新食品原料 | 2017 年第 7 号公告 | 普通食品 | ≤600mg/天'})
+    + fld('备注','note',m.note,{type:'textarea',full:true})
+    + '</div>';
+}
+function parseRows(txt){
+  return (txt||'').split('\n').map(s=>s.trim()).filter(Boolean).map(s=>{
+    const p = s.split('|').map(x=>x.trim());
+    return [p[0]||'', p[1]||'', p[2]||'', p[3]||''];
+  });
+}
+function saveMat(id, d){
+  const o = {code:d.code,name:d.name,type:d.type,spec:d.spec,unit:d.unit,price:parseFloat(d.price)||0,
+    sup:d.sup,status:d.status,ver:d.ver,date:d.date,note:d.note,libId:d.libId,origin:d.origin,
+    acts:parseRows(d.acts).map(r=>[r[0],r[1],r[2]]),
+    regs:parseRows(d.regs),
+    fn:(d.fn||'').split(/[,，]/).map(s=>s.trim()).filter(Boolean),
+    nut:{e:d.n_e===''?null:parseFloat(d.n_e),p:d.n_p===''?null:parseFloat(d.n_p),f:d.n_f===''?null:parseFloat(d.n_f),
+         c:d.n_c===''?null:parseFloat(d.n_c),s:d.n_s===''?null:parseFloat(d.n_s),fib:d.n_fib===''?null:parseFloat(d.n_fib),
+         na:d.n_na===''?null:parseFloat(d.n_na)}
+  };
+  if(!o.nut.e && !o.nut.p && !o.nut.c && !o.nut.f) o.nut = null;
+  if(id){ Object.assign(mat(id), o); addLog('更新原辅料 '+o.code,'material'); }
+  else { DB.materials.unshift(Object.assign({id:uid('M')},o)); addLog('新增原辅料 '+o.code,'material'); }
+  save(); render(); toast(id? '原辅料已更新':'原辅料已创建');
+}
+
+/* ================= 批量导入：原辅料 ================= */
+const IMP_COLS = [
+  ['code',['编码','原辅料编码','物料编码','code']],
+  ['name',['名称','原辅料名称','物料名称','name']],
+  ['lib',['所属库','库','原辅料库','所属原辅料库','lib']],
+  ['type',['类型','物料类型','type']],
+  ['spec',['规格','质量指标','spec']],
+  ['unit',['单位','计量单位','unit']],
+  ['price',['单价','价格','price']],
+  ['sup',['主供应商','供应商','sup']],
+  ['status',['状态','status']],
+  ['ver',['版本','ver']],
+  ['date',['更新日期','日期','date']],
+  ['acts',['功效成分','功效','acts']],
+  ['nut',['营养成分','营养成分表','nut']],
+  ['regs',['法规依据','法规使用依据','regs']],
+  ['note',['备注','note']]
+];
+const IMP_KEYMAP = {'能量':'e','蛋白质':'p','脂肪':'f','碳水化合物':'c','碳水':'c','糖':'s','膳食纤维':'fib','钠':'na',
+  'energy':'e','protein':'p','fat':'f','carb':'c','sugar':'s','fiber':'fib','sodium':'na'};
+const IMP_COLORS = ['#12a56d','#2361c9','#6d4bc0','#d99114','#0d8f8f','#cf3b3b'];
+
+/* 解析分隔文本（自动识别逗号/制表符，支持双引号包裹与转义） */
+function impParse(text){
+  text = String(text||'').replace(/^\ufeff/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim();
+  if(!text) return [];
+  const first = text.split('\n')[0]||'';
+  const tabs=(first.match(/\t/g)||[]).length, commas=(first.match(/,/g)||[]).length;
+  const delim = tabs>commas? '\t' : ',';
+  const rows=[]; let row=[], cur='', q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){ cur+='"'; i++; } else q=false; }
+      else cur+=c;
+    } else if(c==='"'){ q=true; }
+    else if(c===delim){ row.push(cur); cur=''; }
+    else if(c==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
+    else cur+=c;
+  }
+  row.push(cur); rows.push(row);
+  return rows.filter(r=> r.some(x=>String(x).trim()!==''));
+}
+function impHeaderMap(head){
+  const m={};
+  head.forEach((h,i)=>{
+    const t = String(h||'').replace(/[\s（）()]/g,'').trim().toLowerCase();
+    IMP_COLS.forEach(([k,alias])=>{
+      if(m[k]!==undefined) return;
+      if(alias.some(a=> a.toLowerCase()===t)) m[k]=i;
+    });
+  });
+  return m;
+}
+function impSplitRows(s){ return String(s||'').split(/[;；]/).map(x=>x.trim()).filter(Boolean); }
+function impActs(s){
+  return impSplitRows(s).map(t=>{
+    const p = t.split(/[|｜]/).map(x=>x.trim());
+    return [p[0]||'', p[1]||'', p[2]||''];
+  }).filter(p=>p[0]);
+}
+function impRegs(s){
+  return impSplitRows(s).map(t=>{
+    const p = t.split(/[|｜]/).map(x=>x.trim());
+    return [p[0]||'', p[1]||'', p[2]||'', p[3]||''];
+  }).filter(p=>p[0]);
+}
+function impNut(s){
+  const o = {e:null,p:null,f:null,c:null,s:null,fib:null,na:null}; let any=false;
+  impSplitRows(s).forEach(t=>{
+    const p = t.split('=');
+    if(p.length<2) return;
+    const k = IMP_KEYMAP[String(p[0]).replace(/[\s（）()]/g,'').toLowerCase()];
+    const v = parseFloat(String(p[1]).replace(/[^\d.\-]/g,''));
+    if(k && !isNaN(v)){ o[k]=v; any=true; }
+  });
+  return any? o : null;
+}
+/* 库匹配：命中返回现有库，未命中给出待新建库（确定性 id，保证预览与导入一致） */
+function impLib(name){
+  const raw = String(name||'').trim();
+  if(!raw) return {id:(DB.libs&&DB.libs[0])? DB.libs[0].id : 'LIB1', isNew:false, name:(DB.libs&&DB.libs[0])? DB.libs[0].name : '功能性原料库'};
+  const key = raw.replace(/库$/,'');
+  const hit = (DB.libs||[]).find(l=> l.name.replace(/库$/,'')===key || l.id===raw || l.code===raw);
+  if(hit) return {id:hit.id, isNew:false, name:hit.name};
+  return {id:'LIB'+key, isNew:true, name:key+'库'};
+}
+function impSup(name){
+  const n = String(name||'').trim(); if(!n) return '';
+  const s = (DB.suppliers||[]).find(x=> x.name===n) || (DB.suppliers||[]).find(x=> x.name.includes(n) || n.includes(x.name));
+  return s? s.id : '';
+}
+/* 解析 + 逐行校验，产出预览数据（不落库） */
+function impRows(text){
+  const raw = impParse(text);
+  if(!raw.length) return {rows:[], headerErr:'未识别到任何数据行'};
+  const map = impHeaderMap(raw[0]);
+  const miss = [];
+  if(map.code===undefined) miss.push('编码');
+  if(map.name===undefined) miss.push('名称');
+  if(miss.length) return {rows:[], headerErr:'表头缺少必需列：'+miss.join('、')+'（请用「下载模板」的表头）'};
+  const seen = {}, out = [];
+  for(let i=1;i<raw.length;i++){
+    const r = raw[i];
+    const g = k=> (map[k]!==undefined && r[map[k]]!=null)? String(r[map[k]]).trim() : '';
+    const o = {line:i+1, code:g('code'), name:g('name'), libName:g('lib'), type:g('type')||'原料',
+      spec:g('spec'), unit:g('unit')||'kg', price:g('price'), supName:g('sup'),
+      status:['在用','试制','停用'].includes(g('status'))? g('status') : '在用',
+      ver:g('ver')||'V1.0', date:g('date')||todayStr(), note:g('note'),
+      acts:impActs(g('acts')), regs:impRegs(g('regs')), nut:impNut(g('nut')), errs:[]};
+    if(!o.code) o.errs.push('缺少编码');
+    if(!o.name) o.errs.push('缺少名称');
+    if(o.price!=='' && isNaN(parseFloat(o.price))) o.errs.push('单价「'+o.price+'」不是数字');
+    if(o.code){
+      if(seen[o.code]) o.errs.push('文件内编码重复（第 '+seen[o.code]+' 行已出现）');
+      else seen[o.code] = o.line;
+    }
+    const lb = impLib(o.libName);
+    o.libId = lb.id; o.libNew = lb.isNew; o.libShow = lb.name;
+    const exist = DB.materials.find(m=>m.code===o.code);
+    o.act = o.errs.length? 'err' : (!exist? 'new' : (ui.imp && ui.imp.mode==='skip'? 'skip':'upd'));
+    out.push(o);
+  }
+  return {rows:out};
+}
+function impStat(rows){
+  return {total:rows.length,
+    n:rows.filter(r=>r.act==='new').length, u:rows.filter(r=>r.act==='upd').length,
+    s:rows.filter(r=>r.act==='skip').length, e:rows.filter(r=>r.act==='err').length};
+}
+function impPreview(){
+  const box = document.getElementById('impPrev'); if(!box) return;
+  const text = (document.getElementById('impText')||{}).value || '';
+  if(!String(text).trim()){
+    box.innerHTML = '<div class="imp-scroll"><div class="imp-empty">粘贴数据或选择文件后，这里会显示逐行校验结果</div></div>';
+    return;
+  }
+  const res = impRows(text);
+  if(res.headerErr){
+    box.innerHTML = '<div class="imp-tip" style="border-color:#f0c9c9;background:#fdf6f6;color:#a33"><b style="color:#a33">表头错误：</b>'+esc(res.headerErr)+'</div>';
+    return;
+  }
+  const st = impStat(res.rows);
+  const rowsHtml = res.rows.slice(0,50).map(r=>{
+    const cls = r.act==='err'? 'bad' : (r.act==='upd'? 'upd':'');
+    const resTxt = {new:'新增', upd:'更新', skip:'跳过', err:'错误'}[r.act];
+    return '<tr class="'+cls+'"><td class="rn">'+r.line+'</td>'
+      + '<td class="code">'+esc(r.code||'—')+'</td>'
+      + '<td>'+esc(r.name||'—')+(r.errs.length? '<div class="imp-err">'+esc(r.errs.join('；'))+'</div>':'')+'</td>'
+      + '<td>'+esc(r.libShow)+(r.libNew? ' <span class="badge t-amber" style="font-size:10px">新建</span>':'')+'</td>'
+      + '<td>'+esc(r.type)+'</td>'
+      + '<td class="num">'+(r.price===''? '—' : esc(r.price))+'</td>'
+      + '<td>'+(r.acts.length||'—')+'</td>'
+      + '<td>'+(r.regs.length||'—')+'</td>'
+      + '<td><span class="imp-res '+{new:'n',upd:'u',skip:'s',err:'e'}[r.act]+'">'+resTxt+'</span></td></tr>';
+  }).join('');
+  box.innerHTML = '<div class="imp-sum">'
+    + '<div class="k">共<b>'+st.total+'</b>行</div>'
+    + '<div class="k ok">新增<b>'+st.n+'</b></div>'
+    + '<div class="k up">更新<b>'+st.u+'</b></div>'
+    + '<div class="k">跳过<b>'+st.s+'</b></div>'
+    + '<div class="k bad">错误<b>'+st.e+'</b></div>'
+    + (st.total>50? '<div class="k">仅预览前 50 行</div>':'')+'</div>'
+    + '<div class="imp-scroll"><table class="imp-tb"><thead><tr><th>行</th><th>编码</th><th>名称 / 错误</th><th>所属库</th><th>类型</th>'
+    + '<th>单价</th><th>功效</th><th>法规</th><th>结果</th></tr></thead><tbody>'+rowsHtml+'</tbody></table></div>';
+}
+function impTemplate(){
+  const H = ['编码','名称','所属库','类型','规格','单位','单价','主供应商','状态','版本','更新日期','功效成分','营养成分','法规依据','备注'];
+  const rows = [H,
+    ['RM-2001','植物提取物 A（活性成分 A 20%）','功能性原料库','原料','活性成分 A≥20.0%，水分≤5.0%','kg','2600','供应商 F（有机种植基地，示例）','试制','V1.0','2026-01-15',
+      '活性成分 A|≥20.0%|HPLC；活性物 B|≤0.8%|HPLC',
+      '能量=1480;蛋白质=28.5;脂肪=3.2;碳水化合物=42;糖=6.5;膳食纤维=12;钠=210',
+      '新食品原料|2017年第7号公告|≤600mg/天（以活性成分 A计）；普通食品原料|GB 2763|—|—',
+      '示例行，可直接删除'],
+    ['EX-2007','抗性糊精（水溶性膳食纤维）','食品添加剂与辅料库','辅料','膳食纤维≥85%，食品级','kg','24','','在用','V1.0','2026-01-10',
+      '膳食纤维|≥85%|AOAC 2001.03','能量=850;碳水化合物=90;膳食纤维=85','食品添加剂|GB 28050|按生产需要适量使用|—',''],
+    ['PK-3004','PET 瓶 100mL（透明）','包装材料库','包材','食品级 PET，配套防盗盖','个','1.1','','在用','V1.0','2026-01-10','','','','']
+  ];
+  exportCSV('原辅料导入模板', rows);
+}
+function impCommit(){
+  const text = (document.getElementById('impText')||{}).value || '';
+  const res = impRows(text);
+  if(res.headerErr){ toast('表头错误：'+res.headerErr); return false; }
+  const todo = res.rows.filter(r=> r.act==='new' || r.act==='upd');
+  if(!todo.length){ toast('没有可导入的行（请检查错误提示）'); return false; }
+  let n=0, u=0; const newLibs = {};
+  todo.forEach(r=>{
+    if(r.libNew) newLibs[r.libId] = r.libShow;
+    const payload = {code:r.code, name:r.name, libId:r.libId, type:r.type, spec:r.spec, unit:r.unit,
+      price:parseFloat(r.price)||0, sup:impSup(r.supName), status:r.status, ver:r.ver, date:r.date,
+      note:r.note, acts:r.acts, regs:r.regs, nut:r.nut, fn:[], origin:'', made:false};
+    if(r.act==='upd'){
+      const m = DB.materials.find(x=>x.code===r.code);
+      Object.assign(m, payload); u++;
+    } else {
+      DB.materials.push(Object.assign({id:uid('M')}, payload)); n++;
+    }
+  });
+  Object.keys(newLibs).forEach((id,i)=>{
+    if(!(DB.libs||[]).some(l=>l.id===id)){
+      DB.libs.push({id, code:'LIB-'+(DB.libs.length+1), name:newLibs[id],
+        color: IMP_COLORS[(DB.libs.length+i)%IMP_COLORS.length]});
+    }
+  });
+  addLog('批量导入原辅料：新增 '+n+' 项，更新 '+u+' 项','material');
+  save(); render();
+  toast('导入完成：新增 '+n+' 项，更新 '+u+' 项'+(res.rows.filter(r=>r.act==='skip').length? '，跳过 '+res.rows.filter(r=>r.act==='skip').length+' 项':''));
+  return true;
+}
+function openImportMat(){
+  ui.imp = {mode:'skip'};
+  openModal({title:'批量导入原辅料', size:'wide', okText:'开始导入', onOk:()=> impCommit(),
+    body:
+      '<div class="imp-tip">'
+      + '<b>支持两种方式：</b>① 选择 CSV 文件；② 直接从 Excel / WPS 复制整块表格粘贴到下方文本框（制表符分隔也可识别）。<br>'
+      + '<b>字段规则：</b>首行为表头，编码、名称为必填，以<b>编码</b>作为唯一判重依据；单价<b>不要写千分位逗号</b>。<br>'
+      + '<b>功效成分</b>写法：<code>名称|含量|方法</code>，多条用分号隔开；<b>营养成分</b>写法：<code>能量=1480;蛋白质=28.5</code>；<br>'
+      + '<b>法规依据</b>写法：<code>类型|依据|适用范围|限量</code>，多条用分号隔开；所属库填库名（如「功能性原料库」），不存在的库会自动新建。</div>'
+      + '<div class="imp-bar"><button type="button" class="btn sm" data-act="imp-tpl">下载 CSV 模板</button>'
+      + '<button type="button" class="btn sm" data-act="imp-file">选择文件…</button>'
+      + '<button type="button" class="btn sm" data-act="imp-demo">填入示例数据</button>'
+      + '<span class="hint">编码重复时：</span>'
+      + '<select class="sel" style="height:30px;padding:0 8px" id="impMode"><option value="skip">跳过已有编码</option><option value="overwrite">覆盖更新已有编码</option></select>'
+      + '</div>'
+      + '<textarea class="imp-txt" id="impText" placeholder="在此粘贴表格数据，或点击「选择文件…」"></textarea>'
+      + '<div id="impPrev" style="margin-top:10px"></div>'
+  });
+  const ta = document.getElementById('impText');
+  let timer = null;
+  ta.addEventListener('input', ()=>{ clearTimeout(timer); timer = setTimeout(impPreview, 250); });
+  document.getElementById('impMode').addEventListener('change', e=>{ ui.imp.mode = e.target.value; impPreview(); });
+  impPreview();
+}
+
+/* ================= 表单：产品 ================= */
+function prodForm(p){
+  p = p||{};
+  return '<div class="fgrid">'
+    + fld('产品编码','code',p.code,{req:true,ph:'如 FG-1001'})
+    + fld('剂型','form',p.form||'片剂',{type:'select',options:['片剂','胶囊','粉剂','颗粒剂','口服液']})
+    + fld('产品名称','name',p.name,{req:true,full:true})
+    + fld('规格','spec',p.spec,{full:true,ph:'如 60 片/瓶，0.5g/片'})
+    + fld('阶段','stage',p.stage||'研发',{type:'select',options:['研发','中试','量产','停用']})
+    + fld('负责人','owner',p.owner||'张工')
+    + fld('BOM 基准','base',p.base||'每千片',{full:true,ph:'如 每千片 / 每千粒 / 每袋'})
+    + '</div>';
+}
+
+/* ================= 表单：变更 ================= */
+function changeForm(c){
+  c = c||{};
+  return '<div class="fgrid">'
+    + fld('变更单号','code',c.code||('ECR-'+new Date().getFullYear()+'-'+String(DB.changes.length+1).padStart(3,'0')),{req:true})
+    + fld('变更类型','type',c.type||'配方变更',{type:'select',options:['配方变更','工艺变更','供应商变更','包装变更','规格变更']})
+    + fld('变更标题','title',c.title,{req:true,full:true,ph:'一句话说明改什么、为什么改'})
+    + fld('变更说明','desc',c.desc,{type:'textarea',full:true,ph:'背景、原因、影响范围与验证要求'})
+    + fld('优先级','pri',c.pri||'中',{type:'select',options:['高','中','低']})
+    + fld('负责人','owner',c.owner||'张工')
+    + fld('目标完成日期','due',c.due||todayStr(),{type:'date'})
+    + fld('发起人','initiator',c.initiator||'张工')
+    + '</div>';
+}
+
+/* ================= 事件 ================= */
+/* 兼容部分嵌入预览/触屏环境吞掉 click：统一分派函数 + pointerdown 兜底 + 防重复触发 */
+function dispatchAct(e){
+  const t = e.target.closest('[data-act]');
+  if(!t) return;
+  const act = t.dataset.act, id = t.dataset.id, k = t.dataset.k;
+
+  if(act==='nav'){ go(k); return; }
+  if(act==='go-materials'){ go('materials'); return; }
+
+  /* --- 原辅料 --- */
+  if(act==='pick-lib'){ ui.libId = id||''; render(); return; }
+  if(act==='profile'){ openProfile(mat(id)); return; }
+  if(act==='imp-mat'){ openImportMat(); return; }
+  if(act==='imp-tpl'){ impTemplate(); return; }
+  if(act==='imp-file'){
+    const inp = document.createElement('input'); inp.type='file'; inp.accept='.csv,.txt,.tsv,text/csv';
+    inp.onchange = ()=>{
+      const f = inp.files[0]; if(!f) return;
+      const r = new FileReader();
+      r.onload = ()=>{
+        const ta = document.getElementById('impText'); if(!ta) return;
+        ta.value = String(r.result||'');
+        impPreview(); toast('已读取「'+f.name+'」，请核对预览后点「开始导入」');
+      };
+      r.readAsText(f, 'UTF-8');
+    };
+    inp.click(); return;
+  }
+  if(act==='imp-demo'){
+    const ta = document.getElementById('impText'); if(!ta) return;
+    ta.value = '编码,名称,所属库,类型,规格,单位,单价,主供应商,状态,版本,更新日期,功效成分,营养成分,法规依据,备注\n'
+      + 'RM-3001,植物提取物 A（活性成分 A 25%）,功能性原料库,原料,活性成分 A≥25.0%，水分≤5.0%,kg,2980,供应商 F（有机种植基地，示例）,试制,V1.0,2026-11-18,'
+      + '活性成分 A|≥25.0%|HPLC；活性物 B|≤1.0%|HPLC,能量=1520;蛋白质=30.2;脂肪=3.5;碳水化合物=40.5;糖=5.8;膳食纤维=14;钠=195,'
+      + '新食品原料|2017年第7号公告|≤600mg/天（以活性成分 A计）,高含量规格试制\n'
+      + 'EX-2101,低聚果糖（95% 粉剂）,食品添加剂与辅料库,辅料,低聚果糖≥95%，食品级,kg,32,供应商 D（辅料，示例）,在用,V1.0,2026-11-18,'
+      + '低聚果糖|≥95%|HPLC,,普通食品原料|GB 28050|按生产需要适量使用|,益生元\n'
+      + 'PK-3101,铝箔袋 5kg（食品级）,包装材料库,包材,PET/AL/PE，25kg 装,个,1.8,,在用,V1.0,2026-11-18,,,,';
+    impPreview(); toast('已填入 3 行示例，可直接体验');
+    return;
+  }
+  if(act==='new-mat'){
+    openModal({title:'新建原辅料', size:'wide', body:matForm(), okText:'创建',
+      onOk:d=>{ saveMat(null,d); }});
+    return;
+  }
+  if(act==='edit-mat'){
+    const m = mat(id);
+    openModal({title:'编辑原辅料 · '+m.code, size:'wide', body:matForm(m), okText:'保存',
+      onOk:d=>{ saveMat(id,d); }});
+    return;
+  }
+  if(act==='del-mat'){
+    const used = usedByFormulas(id);
+    if(used.length){ alert('该原料已被 '+used.length+' 个配方引用（'+used.map(f=>f.code).join('、')+'），请先在配方中移除。'); return; }
+    if(confirm('确定删除原辅料「'+matName(id)+'」？该操作不可撤销。')){
+      DB.materials = DB.materials.filter(m=>m.id!==id); addLog('删除原辅料 '+id,'material'); save(); render(); toast('原辅料已删除');
+    }
+    return;
+  }
+  if(act==='exp-mat'){ exportCSV('原辅料台账',[['编码','名称','库','类型','规格','单位','单价','关键功效成分','法规依据','状态','版本','更新日期'],
+    ...DB.materials.map(m=>[m.code,m.name,libOf(m.libId).name,m.type,m.spec,m.unit,m.price,
+      (m.acts&&m.acts[0])? m.acts[0][0]+' '+m.acts[0][1]:'', (m.regs&&m.regs[0])? m.regs[0][0]+' '+m.regs[0][1]:'',
+      m.status,m.ver,m.date])]); return; }
+
+  /* --- 配方 --- */
+  if(act==='new-formula'){
+    const f = {id:uid('F'),code:'FRM-'+String((DB.formulas||[]).length+1).padStart(4,'0'),name:'',ver:'V1.0',status:'草稿',
+      batch:100,yieldRate:98,servings:0,servingUnit:'片',product:'',owner:'张工',date:todayStr(),note:'',items:[],archives:[]};
+    openModal({title:'新建配方', body:'<div class="fgrid">'
+      + fld('配方编号','code',f.code,{req:true})
+      + fld('配方名称','name','',{req:true})
+      + fld('批量（kg）','batch','100',{req:true,type:'number',step:'0.1',min:0})
+      + fld('成品率（%）','yieldRate','98',{type:'number',step:'0.1',min:1})
+      + fld('产出份数','servings','0',{type:'number',step:'1',min:0})
+      + fld('份数单位','servingUnit','片',{type:'select',options:['片','粒','条','份','瓶','袋']})
+      + fld('负责人','owner','张工')
+      + fld('关联产品编码','product','',{ph:'可选，如 FG-1001'})
+      + '</div>', okText:'创建并编辑', onOk:d=>{
+        Object.assign(f,{code:d.code,name:d.name,batch:parseFloat(d.batch)||0,yieldRate:parseFloat(d.yieldRate)||100,
+          servings:parseInt(d.servings)||0,servingUnit:d.servingUnit,owner:d.owner,product:d.product});
+        DB.formulas.unshift(f); addLog('新建配方 '+d.code,'formula'); save();
+        ui.formulaId = f.id; ui.editing = null; render(); toast('配方已创建，请添加原辅料');
+      }});
+    return;
+  }
+  if(act==='open-formula'){ ui.formulaId = id; ui.editing = null; render(); document.getElementById('view').scrollTop=0; return; }
+  if(act==='del-formula'){
+    const f = DB.formulas.find(x=>x.id===id);
+    if(confirm('确定删除配方「'+f.name+'」及其存档版本？')){
+      DB.formulas = DB.formulas.filter(x=>x.id!==id); addLog('删除配方 '+f.code,'formula'); save(); render(); toast('配方已删除');
+    }
+    return;
+  }
+  if(act==='mat-to-formula'){
+    const m = mat(id);
+    const f = {id:uid('F'),code:'FRM-'+String((DB.formulas||[]).length+1).padStart(4,'0'),name:'新建配方（'+m.name.slice(0,12)+'）',
+      ver:'V0.1',status:'草稿',batch:100,yieldRate:98,servings:0,servingUnit:'片',product:'',owner:'张工',
+      date:todayStr(),note:'由原辅料档案创建',items:[{ing:m.id,qty:1,loss:0}],archives:[]};
+    DB.formulas.unshift(f); save(); ui.formulaId=f.id; ui.editing=null; go('formulas'); toast('已创建配方草稿');
+    return;
+  }
+  if(act==='fx-back'){
+    if(ui.dirty && !confirm('当前修改尚未保存，确定离开？')) return;
+    ui.formulaId=null; ui.editing=null; ui.dirty=false; render(); return;
+  }
+  if(act==='fx-add'){
+    const e = ui.editing;
+    e.items.push({ing:(DB.materials[0]||{}).id||'',qty:1,loss:0});
+    ui.dirty=true; render();
+    const tb = document.querySelectorAll('[data-fx="qty"]');
+    if(tb.length) tb[tb.length-1].focus();
+    return;
+  }
+  if(act==='fx-del'){
+    const e = ui.editing;
+    e.items.splice(+t.dataset.i,1); ui.dirty=true; render(); return;
+  }
+  if(act==='fx-save'){
+    const e = ui.editing, f = DB.formulas.find(x=>x.id===e.id);
+    Object.assign(f, JSON.parse(JSON.stringify(e)));
+    addLog('保存配方 '+e.code,'formula'); save(); ui.dirty=false; render(); toast('配方已保存');
+    return;
+  }
+  if(act==='fx-archive'){
+    const e = ui.editing, f = DB.formulas.find(x=>x.id===e.id);
+    const total = formulaCost(e), out = formulaOut(e);
+    const ver = prompt('请输入本次存档版本号：', nextVer(e.ver));
+    if(!ver) return;
+    const snap = {ver:ver, date:todayStr(), user:'张工', cost:total, unit: total/(out||1),
+      per: e.servings? total/e.servings : 0,
+      items: e.items.map(i=>({ing:i.ing,qty:+i.qty,loss:+i.loss||0,price:ingPrice(i.ing)}))};
+    const archiveHistory = (f.archives||[]).slice();
+    Object.assign(f, JSON.parse(JSON.stringify(e)));
+    f.archives = archiveHistory.concat([snap]);
+    f.ver = ver; f.status = '已存档';
+    addLog('配方存档 '+e.code+' '+ver,'formula'); save();
+    ui.editing = null; ui.dirty = false; render();
+    toast('已存档为 '+ver+'，该版本配方表已锁定');
+    return;
+  }
+  if(act==='fx-edit-info'){
+    const e = ui.editing;
+    openModal({title:'配方基本信息', body:'<div class="fgrid">'
+      + fld('配方编号','code',e.code,{req:true})
+      + fld('配方名称','name',e.name,{req:true})
+      + fld('批量（kg）','batch',e.batch,{type:'number',step:'0.1',min:0})
+      + fld('成品率（%）','yieldRate',e.yieldRate,{type:'number',step:'0.1',min:1})
+      + fld('产出份数','servings',e.servings,{type:'number',step:'1',min:0})
+      + fld('份数单位','servingUnit',e.servingUnit||'片',{type:'select',options:['片','粒','条','份','瓶','袋']})
+      + fld('关联产品编码','product',e.product||'')
+      + fld('负责人','owner',e.owner)
+      + fld('备注','note',e.note,{type:'textarea',full:true})
+      + '</div>', okText:'保存', onOk:d=>{
+        Object.assign(e,{code:d.code,name:d.name,batch:parseFloat(d.batch)||0,yieldRate:parseFloat(d.yieldRate)||100,
+          servings:parseInt(d.servings)||0,servingUnit:d.servingUnit,product:d.product,owner:d.owner,note:d.note});
+        ui.dirty=true; render(); toast('基本信息已更新（记得点保存）');
+      }});
+    return;
+  }
+  if(act==='view-arch'){
+    const f = DB.formulas.find(x=>x.id===id);
+    const a = (f.archives||[]).find(x=>x.ver===t.dataset.ver);
+    if(!a) return;
+    const rowsHtml = a.items.map((i,idx)=>{
+      const m = mat(i.ing)||{};
+      return '<tr><td class="sub2">'+(idx+1)+'</td><td><b>'+esc(m.name||i.ing)+'</b><div class="sub2">'+esc(m.code||'')+'</div></td>'
+        + '<td class="num">'+i.qty+' '+esc(m.unit||'')+'</td><td class="num">'+money(i.price)+'</td>'
+        + '<td class="num">'+i.loss+'%</td><td class="num"><b>'+money(i.qty*i.price*(1+i.loss/100))+'</b></td></tr>';
+    }).join('');
+    openModal({title:'存档配方表 · '+f.code+' '+a.ver, size:'wide', onOk:null, body:
+      '<div class="dl"><div class="d"><span>版本</span><b>'+esc(a.ver)+'</b></div>'
+      + '<div class="d"><span>存档日期</span><b>'+esc(a.date)+'</b></div>'
+      + '<div class="d"><span>操作人</span><b>'+esc(a.user)+'</b></div>'
+      + '<div class="d"><span>原料成本</span><b>'+money(a.cost)+'</b></div>'
+      + '<div class="d"><span>单位成本</span><b>'+money(a.unit)+' /kg</b></div>'
+      + '<div class="d"><span>每份成本</span><b>'+money(a.per)+'</b></div></div>'
+      + '<div class="sec-t">配方表快照（冻结价格）</div>'
+      + '<table class="tbl2"><thead><tr><th>#</th><th>原辅料</th><th style="text-align:right">用量</th><th style="text-align:right">单价</th><th style="text-align:right">损耗</th><th style="text-align:right">成本</th></tr></thead>'
+      + '<tbody>'+rowsHtml+'</tbody></table>'
+      + '<div class="note" style="margin-top:12px">该版本为存档快照，单价与用量已锁定，不随原辅料价格变动。</div>'});
+    return;
+  }
+  if(act==='exp-formula'){
+    exportCSV('配方台账',[['配方编号','名称','版本','状态','批量kg','成品率%','产出kg','份数','每份单位','原料成本','单位成本','每份成本','负责人','存档版本数'],
+      ...DB.formulas.map(f=>[f.code,f.name,f.ver,f.status,f.batch,f.yieldRate,num(formulaOut(f),1),f.servings,f.servingUnit,
+        formulaCost(f).toFixed(2),formulaUnitCost(f).toFixed(2),formulaPerServing(f).toFixed(4),f.owner,(f.archives||[]).length])]);
+    return;
+  }
+  if(act==='exp-formula-one'){
+    const e = ui.editing;
+    const rows = [['配方编号',e.code],['配方名称',e.name],['版本',e.ver],['状态',e.status],['批量',e.batch+'kg'],['成品率',e.yieldRate+'%'],['产出',num(formulaOut(e),2)+'kg'],[],
+      ['#','原辅料编码','原辅料名称','用量','单位','损耗%','单价','成本','占比%']];
+    const total = formulaCost(e);
+    e.items.forEach((i,idx)=>{ const m=mat(i.ing)||{}; const c=itemCost(i);
+      rows.push([idx+1,m.code||'',m.name||'',i.qty,m.unit||'',i.loss||0,ingPrice(i.ing).toFixed(2),c.toFixed(2),(total?c/total*100:0).toFixed(2)]); });
+    rows.push([],['','','','','','','合计',total.toFixed(2),'100.00'],['','','','','','','单位成本',(total/(formulaOut(e)||1)).toFixed(2),'元/kg']);
+    exportCSV('配方表-'+e.code, rows);
+    return;
+  }
+
+  /* --- 产品 / BOM --- */
+  if(act==='new-prod'){
+    openModal({title:'新建产品', body:prodForm(), okText:'创建', onOk:d=>{
+      const p = {id:uid('P'),code:d.code,name:d.name,form:d.form,spec:d.spec,stage:d.stage,owner:d.owner,
+        base:d.base,date:todayStr(),bom:[]};
+      DB.products.unshift(p); addLog('新建产品 '+d.code,'product'); save(); render(); toast('产品已创建，请添加 BOM');
+    }});
+    return;
+  }
+  if(act==='edit-prod'){
+    const p = DB.products.find(x=>x.id===id);
+    openModal({title:'编辑产品 · '+p.code, body:prodForm(p), okText:'保存', onOk:d=>{
+      Object.assign(p,{code:d.code,name:d.name,form:d.form,spec:d.spec,stage:d.stage,owner:d.owner,base:d.base});
+      addLog('更新产品 '+d.code,'product'); save(); render(); toast('产品已更新');
+    }});
+    return;
+  }
+  if(act==='del-prod'){
+    const p = DB.products.find(x=>x.id===id);
+    if(confirm('确定删除产品「'+p.name+'」及其 BOM？')){
+      DB.products = DB.products.filter(x=>x.id!==id); addLog('删除产品 '+p.code,'product'); save(); render(); toast('产品已删除');
+    }
+    return;
+  }
+  if(act==='view-bom'){ openBom(DB.products.find(x=>x.id===id)); return; }
+  if(act==='exp-prod'){ exportCSV('产品清单',[['编码','名称','剂型','规格','阶段','负责人','BOM项数','单位成本'],
+    ...DB.products.map(p=>[p.code,p.name,p.form,p.spec,p.stage,p.owner,countNodes(p.bom),bomCost(p.bom).toFixed(2)])]); return; }
+
+  if(act==='tgl'){ ui.treeOpen[k] = (ui.treeOpen[k]===false); render(); const p=DB.products.find(x=>x.bom.some(n=>n.id===k||JSON.stringify(n).includes('"'+k+'"'))); if(p) openBom(p); return; }
+  if(act==='bom-add' || act==='bom-add-child'){
+    const pid = act==='bom-add'? id : (function(){
+      const p = DB.products.find(x=> JSON.stringify(x.bom).includes('"'+t.dataset.p+'"')); return p? p.id:null;
+    })();
+    const p = DB.products.find(x=>x.id===pid);
+    if(!p) return;
+    const parent = act==='bom-add-child'? t.dataset.p : '';
+    openModal({title:'添加 BOM 物料', body:'<div class="fgrid">'
+      + fld('选择物料','mid','',{req:true,type:'select',full:true,options:DB.materials.map(m=>({v:m.id,t:m.code+' · '+m.name}))})
+      + fld('用量（'+ (p.base||'单位') +'）','qty','1',{req:true,type:'number',step:'0.0001',min:0})
+      + fld('损耗率（%）','loss','2',{type:'number',step:'0.1',min:0})
+      + fld('单位','unit','kg',{type:'select',options:['kg','g','个','L']})
+      + '</div>', okText:'添加', onOk:d=>{
+        const node = {id:uid('n'),mid:d.mid,qty:parseFloat(d.qty)||0,unit:d.unit,loss:parseFloat(d.loss)||0,children:[]};
+        if(parent){
+          const find = arr=>{ for(const n of arr){ if(n.id===parent) return n; const r=find(n.children||[]); if(r) return r; } return null; };
+          const pn = find(p.bom); if(pn){ pn.children = pn.children||[]; pn.children.push(node); }
+        } else p.bom.push(node);
+        addLog('更新 BOM：'+p.code,'product'); save(); openBom(p); toast('BOM 已更新'); return false;
+      }});
+    return;
+  }
+  if(act==='bom-del'){
+    const p = DB.products.find(x=> JSON.stringify(x.bom).includes('"'+t.dataset.p+'"'));
+    if(!p) return;
+    const rm = arr=>{ for(let i=0;i<arr.length;i++){ if(arr[i].id===t.dataset.p){ arr.splice(i,1); return true; } if(rm(arr[i].children||[])) return true; } return false; };
+    rm(p.bom); addLog('删除 BOM 行：'+p.code,'product'); save(); openBom(p); toast('BOM 行已删除');
+    return;
+  }
+
+  /* --- 变更 --- */
+  if(act==='new-change'){
+    openModal({title:'发起变更申请（ECR/ECN）', body:changeForm(), size:'wide', okText:'创建', onOk:d=>{
+      const c = {id:uid('C'),code:d.code,title:d.title,type:d.type,pri:d.pri,status:'草稿',initiator:d.initiator,
+        owner:d.owner,created:todayStr(),due:d.due,affected:[],desc:d.desc,approvals:[],history:[{t:nowStr(),u:d.initiator,a:'创建变更申请（草稿）'}]};
+      DB.changes.unshift(c); addLog('创建变更 '+d.code,'change'); save(); render(); toast('变更申请已创建');
+    }});
+    return;
+  }
+  if(act==='view-chg'){ const c = DB.changes.find(x=>x.id===id); openChange(c); return; }
+  if(act==='del-chg'){
+    if(confirm('确定删除该变更单？')){
+      DB.changes = DB.changes.filter(c=>c.id!==id); save(); render(); toast('变更单已删除');
+    }
+    return;
+  }
+  if(act==='chg-next'){
+    const c = DB.changes.find(x=>x.id===id);
+    if(c.status==='草稿'){ c.status='影响评估'; c.history.push({t:nowStr(),u:'张工',a:'提交影响评估'}); }
+    else if(c.status==='影响评估'){
+      c.status='审批中';
+      if(!c.approvals.length){
+        c.approvals = [{role:'研发',user:'张工',state:'待审批',date:'',cmt:''},
+                       {role:'质量',user:'陈工',state:'待审批',date:'',cmt:''},
+                       {role:'生产',user:'赵工',state:'待审批',date:'',cmt:''}];
+      }
+      c.history.push({t:nowStr(),u:'张工',a:'提交多级审批'});
+    }
+    else if(c.status==='审批中'){ c.status='已批准'; c.history.push({t:nowStr(),u:'张工',a:'所有审批通过，变更批准'}); }
+    else if(c.status==='已批准'){ c.status='实施中'; c.history.push({t:nowStr(),u:'赵工',a:'开始实施'}); }
+    else if(c.status==='实施中'){ c.status='已关闭'; c.history.push({t:nowStr(),u:'张工',a:'实施验证完成，关闭变更'}); }
+    addLog(c.code+' → '+c.status,'change'); save(); render(); openChange(c); toast('状态已更新为「'+c.status+'」');
+    return;
+  }
+  if(act==='apv-ok' || act==='apv-no'){
+    const c = DB.changes.find(x=>x.id===id);
+    const a = c.approvals[+t.dataset.i];
+    a.state = act==='apv-ok'? '已通过':'已驳回';
+    a.date = todayStr();
+    c.history.push({t:nowStr(),u:a.user,a:a.role+'审批'+(a.state==='已通过'?'通过':'驳回')});
+    if(act==='apv-no'){ c.status='已驳回'; c.history.push({t:nowStr(),u:a.user,a:'变更被驳回，退回修改'}); }
+    save(); render(); openChange(c); toast('审批已'+a.state);
+    return;
+  }
+  if(act==='chg-reject'){
+    const c = DB.changes.find(x=>x.id===id);
+    const why = prompt('请填写驳回原因：','验证数据不足，请补充三批稳定性数据');
+    if(why){ c.status='已驳回'; c.history.push({t:nowStr(),u:'张工',a:'驳回：'+why}); save(); render(); openChange(c); toast('已驳回'); }
+    return;
+  }
+  if(act==='exp-chg'){ exportCSV('变更清单',[['变更单号','标题','类型','优先级','状态','发起人','负责人','创建','目标日期'],
+    ...DB.changes.map(c=>[c.code,c.title,c.type,c.pri,c.status,c.initiator,c.owner,c.created,c.due])]); return; }
+
+  /* --- 项目 --- */
+  if(act==='new-prj'){
+    openModal({title:'新建研发项目', body:'<div class="fgrid">'
+      + fld('项目编码','code','PRJ-'+new Date().getFullYear()+'-'+String(DB.projects.length+1).padStart(2,'0'),{req:true})
+      + fld('项目名称','name','',{req:true})
+      + fld('项目描述','desc','',{type:'textarea',full:true})
+      + fld('阶段','stage','概念',{type:'select',options:STAGES})
+      + fld('负责人','owner','张工')
+      + fld('开始日期','start',todayStr(),{type:'date'})
+      + fld('计划完成','end',todayStr(),{type:'date'})
+      + '</div>', okText:'创建', onOk:d=>{
+        DB.projects.unshift({id:uid('J'),code:d.code,name:d.name,stage:d.stage,prog:5,owner:d.owner,
+          start:d.start,end:d.end,desc:d.desc,ms:['立项评审']});
+        addLog('新建项目 '+d.code,'project'); save(); render(); toast('项目已创建');
+      }});
+    return;
+  }
+  if(act==='view-prj'){
+    const p = DB.projects.find(x=>x.id===id);
+    const stgIdx = STAGES.indexOf(p.stage);
+    openModal({title:p.code+' · '+p.name, size:'wide', onOk:null, body:
+      '<div class="dl"><div class="d"><span>当前阶段</span><b>'+esc(p.stage)+'</b></div>'
+      + '<div class="d"><span>进度</span><b>'+p.prog+'%</b></div>'
+      + '<div class="d"><span>负责人</span><b>'+esc(p.owner)+'</b></div>'
+      + '<div class="d"><span>计划周期</span><b>'+esc(p.start)+' → '+esc(p.end)+'</b></div></div>'
+      + '<div class="sec-t">项目描述</div><div class="note">'+esc(p.desc||'—')+'</div>'
+      + '<div class="sec-t">阶段门进度</div><div class="steps">'+STAGES.map((s,i)=>
+          '<div class="step '+(i<stgIdx?'done':(i===stgIdx?'cur':''))+'"><div class="cr">'+(i<stgIdx?'✓':i+1)+'</div>'+s+'</div>'
+          + (i<STAGES.length-1?'<div class="ln"></div>':'')).join('')+'</div>'
+      + '<div class="sec-t">里程碑</div>' + p.ms.map((m,i)=>'<div class="kv"><span>'+(i+1)+'. '+esc(m)+'</span>'
+          + '<b style="font-size:12px;color:'+(i<Math.ceil(p.prog/100*p.ms.length)?'#0a6f49':'#9aaba3')+'">'
+          + (i<Math.ceil(p.prog/100*p.ms.length)?'已完成':'待完成')+'</b></div>').join('')
+      + '<div class="row" style="margin-top:16px;justify-content:flex-end">'
+      + '<button class="btn" data-act="prj-prog" data-id="'+p.id+'">更新进度</button>'
+      + (stgIdx<STAGES.length-1? '<button class="btn primary" data-act="prj-next" data-id="'+p.id+'">推进到「'+STAGES[stgIdx+1]+'」</button>':'')
+      + '</div>'});
+    return;
+  }
+  if(act==='prj-next'){
+    const p = DB.projects.find(x=>x.id===id);
+    const i = STAGES.indexOf(p.stage);
+    if(i<STAGES.length-1){ p.stage = STAGES[i+1]; p.prog = Math.max(p.prog, Math.round((i+1)/(STAGES.length-1)*100)); }
+    addLog('项目 '+p.code+' 进入'+p.stage,'project'); save(); render(); toast('项目已推进到「'+p.stage+'」');
+    return;
+  }
+  if(act==='prj-prog'){
+    const p = DB.projects.find(x=>x.id===id);
+    const v = prompt('请输入当前进度（0-100）：', p.prog);
+    if(v!==null){ p.prog = Math.max(0, Math.min(100, parseInt(v)||0)); addLog('更新项目进度 '+p.code,'project'); save(); render(); toast('进度已更新'); }
+    return;
+  }
+
+  /* --- 文档 --- */
+  const docForm = d0 => {
+    d0 = d0||{};
+    return '<div class="fgrid">'
+      + fld('文档编号','code',d0.code,{req:true,ph:'如 SOP-MFG-012'})
+      + fld('文档类型','type',d0.type||'SOP',{type:'select',options:['SOP','规格书','COA','研究报告','法规文件','标签稿件']})
+      + fld('标题','title',d0.title,{req:true,full:true})
+      + fld('版本号','ver',d0.ver||'V1.0')
+      + fld('状态','status',d0.status||'草稿',{type:'select',options:['草稿','审核中','生效','已作废']})
+      + fld('责任人','owner',d0.owner||'张工')
+      + fld('关联物料 / 产品','link',d0.link||'',{type:'select',options:[{v:'',t:'（通用文档）'}]
+          .concat(DB.materials.map(m=>({v:m.id,t:'物料 · '+m.code+' '+m.name})))
+          .concat(DB.products.map(p=>({v:p.id,t:'产品 · '+p.code+' '+p.name})))})
+      + fld('发布日期','date',d0.date||todayStr(),{type:'date'})
+      + fld('有效期至','expire',d0.expire||'',{type:'date'})
+      + '</div>';
+  };
+  window.__docForm = docForm;
+  if(act==='new-doc'){
+    openModal({title:'上传文档', body:docForm(), okText:'保存', onOk:d=>{
+      DB.docs.unshift(Object.assign({id:uid('D')},d)); addLog('上传文档 '+d.code,'doc'); save(); render(); toast('文档已保存');
+    }});
+    return;
+  }
+  if(act==='edit-doc'){
+    const d0 = DB.docs.find(x=>x.id===id);
+    openModal({title:'编辑文档 · '+d0.code, body:docForm(d0), okText:'保存', onOk:d=>{
+      Object.assign(d0,d); addLog('更新文档 '+d.code,'doc'); save(); render(); toast('文档已更新');
+    }});
+    return;
+  }
+  if(act==='del-doc'){
+    if(confirm('确定删除该文档记录？')){ DB.docs = DB.docs.filter(x=>x.id!==id); save(); render(); toast('文档已删除'); }
+    return;
+  }
+  if(act==='exp-doc'){ exportCSV('文档台账',[['编号','标题','类型','版本','状态','责任人','发布日期','有效期至'],
+    ...DB.docs.map(d=>[d.code,d.title,d.type,d.ver,d.status,d.owner,d.date,d.expire])]); return; }
+
+  /* --- 供应商 --- */
+  const supForm = s0 => {
+    s0 = s0||{};
+    return '<div class="fgrid">'
+      + fld('供应商编码','code',s0.code||'SUP-'+String(DB.suppliers.length+1).padStart(3,'0'),{req:true})
+      + fld('准入状态','status',s0.status||'考察中',{type:'select',options:['合格','考察中','暂停']})
+      + fld('供应商名称','name',s0.name,{req:true,full:true})
+      + fld('所在地区','region',s0.region,{ph:'如 华东地区'})
+      + fld('供应类别','cat',s0.cat,{ph:'如 原料 / 辅料 / 包材'})
+      + fld('资质证照（逗号分隔）','certs',(s0.certs||[]).join(','),{full:true,ph:'SC 生产许可,ISO 22000,HALAL'})
+      + fld('联系人 / 电话','contact',s0.contact,{full:true})
+      + fld('合作起始','since',s0.since||todayStr(),{type:'date'})
+      + '</div>';
+  };
+  if(act==='new-sup'){
+    openModal({title:'新增供应商', body:supForm(), okText:'创建', onOk:d=>{
+      DB.suppliers.push({id:uid('SUP'),code:d.code,name:d.name,region:d.region,cat:d.cat,
+        certs:(d.certs||'').split(/[,，]/).filter(Boolean),status:d.status,since:d.since,contact:d.contact});
+      addLog('新增供应商 '+d.name,'supplier'); save(); render(); toast('供应商已创建');
+    }});
+    return;
+  }
+  if(act==='edit-sup'){
+    const s0 = DB.suppliers.find(x=>x.id===id);
+    openModal({title:'编辑供应商 · '+s0.code, body:supForm(s0), okText:'保存', onOk:d=>{
+      Object.assign(s0,{code:d.code,name:d.name,region:d.region,cat:d.cat,status:d.status,since:d.since,contact:d.contact,
+        certs:(d.certs||'').split(/[,，]/).filter(Boolean)});
+      addLog('更新供应商 '+s0.name,'supplier'); save(); render(); toast('供应商已更新');
+    }});
+    return;
+  }
+  if(act==='del-sup'){
+    if(confirm('确定删除该供应商？')){
+      DB.suppliers = DB.suppliers.filter(x=>x.id!==id); save(); render(); toast('供应商已删除');
+    }
+    return;
+  }
+
+  /* --- 数据 --- */
+  if(act==='exp-json'){
+    download('NutraPLM-数据备份-'+todayStr()+'.json', JSON.stringify(DB,null,2), 'application/json');
+    toast('数据已导出'); return;
+  }
+  if(act==='imp-json'){
+    const inp = document.createElement('input'); inp.type='file'; inp.accept='.json';
+    inp.onchange = ()=>{ const f = inp.files[0]; if(!f) return;
+      const r = new FileReader();
+      r.onload = ()=>{ try{ const o = JSON.parse(r.result); if(!o.materials) throw 0; DB = o; save(); render(); toast('数据导入成功'); }
+        catch(err){ toast('文件格式不正确'); } };
+      r.readAsText(f); };
+    inp.click(); return;
+  }
+  if(act==='reset'){
+    if(confirm('将清空当前数据并恢复为初始演示数据，确定继续？')){
+      DB = seed(); save(); render(); toast('已重置为演示数据');
+    }
+    return;
+  }
+}
+
+/* 事件通道：pointerdown 先行（触屏/部分预览容器只透传按下事件），click 兜底；
+   同一元素 800ms 内由 pointerdown 处理过的，click 不再重复执行 */
+let pdTarget = null, pdTime = 0;
+document.addEventListener('pointerdown', e=>{
+  pdTarget = e.target.closest('[data-act]');
+  pdTime = Date.now();
+  dispatchAct(e);
+}, true);
+document.addEventListener('click', e=>{
+  const t = e.target.closest('[data-act]');
+  if(t && t===pdTarget && Date.now()-pdTime<800) return;
+  dispatchAct(e);
+}, true);
+
+/* 键盘快捷键：Alt+数字 直接切换页面（数字对应侧边栏第 N 项） */
+document.addEventListener('keydown', e=>{
+  if(e.altKey && e.key>='1' && e.key<='9'){
+    const n = NAV[parseInt(e.key)-1];
+    if(n){ e.preventDefault(); go(n.k); }
+  }
+});
+
+/* 配方编辑器：行内修改即时重算 */
+document.addEventListener('input', e=>{
+  const el = e.target.closest('[data-fx]');
+  if(!el || !ui.editing) return;
+  const i = +el.dataset.i, key = el.dataset.fx;
+  const it = ui.editing.items[i];
+  if(!it) return;
+  if(key==='ing') it.ing = el.value;
+  else if(key==='qty') it.qty = parseFloat(el.value)||0;
+  else if(key==='loss') it.loss = parseFloat(el.value)||0;
+  ui.dirty = true;
+  fxRecount();
+});
+
+/* 筛选 */
+document.addEventListener('input', e=>{
+  const el = e.target.closest('[data-filter]');
+  if(!el) return;
+  const key = el.dataset.filter;
+  ui[key] = el.value;
+  applyFilter();
+});
+document.addEventListener('change', e=>{
+  const el = e.target.closest('select[data-filter]');
+  if(!el) return;
+  ui[el.dataset.filter] = el.value;
+  applyFilter();
+});
+function applyFilter(){
+  const rows = document.querySelectorAll('tbody tr[data-row]');
+  if(!rows.length) return;
+  let shown = 0;
+  rows.forEach(tr=>{
+    let ok = true;
+    if(cur==='materials'){
+      const q=(ui.mQ||'').toLowerCase().trim();
+      ok = (!q || tr.dataset.s.includes(q)) && (!ui.mType || tr.dataset.type===ui.mType)
+        && (!ui.libId || tr.dataset.lib===ui.libId);
+    } else if(cur==='formulas'){
+      const q=(ui.fQ||'').toLowerCase().trim();
+      ok = (!q || tr.dataset.s.includes(q)) && (!ui.fStatus || tr.dataset.status===ui.fStatus);
+    } else if(cur==='products'){
+      const q=(ui.pQ||'').toLowerCase().trim(); ok = !q || tr.dataset.s.includes(q);
+    } else if(cur==='changes'){
+      const q=(ui.cQ||'').toLowerCase().trim();
+      ok = (!q || tr.dataset.s.includes(q)) && (!ui.cStatus || tr.dataset.status===ui.cStatus);
+    } else if(cur==='docs'){
+      const q=(ui.dQ||'').toLowerCase().trim();
+      ok = (!q || tr.dataset.s.includes(q)) && (!ui.dType || tr.dataset.type===ui.dType);
+    } else if(cur==='suppliers'){
+      const q=(ui.sQ||'').toLowerCase().trim(); ok = !q || tr.dataset.s.includes(q);
+    }
+    tr.style.display = ok? '':'none';
+    if(ok) shown++;
+  });
+  const c = document.getElementById('mcount');
+  if(c && cur==='materials') c.textContent = '筛选出 '+shown+' 项';
+}
+
+/* 全局搜索 */
+document.addEventListener('DOMContentLoaded', ()=>{});
+document.getElementById('gq').addEventListener('keydown', e=>{
+  if(e.key==='Enter'){
+    const q = e.target.value.trim();
+    if(!q) return;
+    ui.mQ = q; cur='materials'; render(); applyFilter(); toast('已在物料中搜索「'+q+'」');
+  }
+});
+
+/* 导出工具 */
+function download(name, content, mime){
+  const blob = new Blob([content], {type:(mime||'text/plain')+';charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1500);
+}
+function exportCSV(name, rows){
+  const csv = '\ufeff' + rows.map(r=>r.map(c=>{
+    const s = String(c==null?'':c);
+    return /[",\n]/.test(s)? '"'+s.replace(/"/g,'""')+'"' : s;
+  }).join(',')).join('\n');
+  download(name+'-'+todayStr()+'.csv', csv, 'text/csv');
+  toast('已导出 '+name+'.csv');
+}
+
+/* 键盘 */
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+
+/* 启动：支持 #物料页 锚点直达（如 #products） */
+const VIEWS = {
+  dashboard: VIEWS_dashboard, materials: VIEWS_materials, products: VIEWS_products,
+  formulas: VIEWS_formulas,
+  changes: VIEWS_changes, projects: VIEWS_projects, docs: VIEWS_docs,
+  suppliers: VIEWS_suppliers, data: VIEWS_data
+};
+const initHash = (location.hash||'').replace('#','');
+if(VIEWS[initHash]) cur = initHash;
+/* 启动流程由 enhance.js 接管：登录 → 拉取快照 → render() */
+</script>
+<script src="enhance.js"></script>
+</body>
+</html>
